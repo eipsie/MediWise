@@ -2,13 +2,15 @@ spring:
   application:
     name: backend
 
+
   datasource:
     # 数据源配置
     driver-class-name: com.mysql.cj.jdbc.Driver
     # 数据库连接地址
-    url: jdbc:mysql://47.121.181.198:3307/vision_wear?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC
+    url: jdbc:mysql://47.122.78.242:3306/medi_wise?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
     # 数据库用户名
     username: root
+    # 数据库密码
     password: 123456
 
   servlet:
