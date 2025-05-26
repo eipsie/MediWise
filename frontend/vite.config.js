@@ -4,6 +4,6 @@ import vue from '@vitejs/plugin-vue';
 export default defineConfig({
   plugins: [vue()],
   server: {
-    port: 3000, // 你想要的端口号
+    port: 6161, // 你想要的端口号
   }
 });

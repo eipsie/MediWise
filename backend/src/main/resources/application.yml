@@ -2,7 +2,6 @@ spring:
   application:
     name: backend
 
-
   datasource:
     # 数据源配置
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -18,6 +17,9 @@ spring:
       # 文件上传配置
       max-file-size: 10MB
       max-request-size: 20MB
+
+server:
+  port: 9191  # 服务端口
 
 mybatis-plus:
   configuration:
