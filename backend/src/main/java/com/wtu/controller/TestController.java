@@ -1,5 +1,6 @@
 package com.wtu.controller;
 
+import com.wtu.entity.User;
 import com.wtu.result.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -15,13 +16,11 @@ public class TestController {
 
 
 
-     @GetMapping("/test")
+     @GetMapping("/getInfo")
      @Operation(description = "测试接口")
-     public Result test() {
-            log.info("测试接口正在运行");
-            log.error("测试接口正在运行");
-            log.warn("测试接口正在运行");
-         return Result.success("test");
+     public Result<User> test() {
+         User user = new User("2204240115", "管海峰", 20);
+         return Result.success(user);
      }
 
 
