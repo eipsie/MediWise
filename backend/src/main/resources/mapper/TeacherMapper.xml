@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace表示命名空间，需要与对应的Mapper接口全限定名一致 -->
+<mapper namespace="com.wtu.mapper.TeacherMapper">
+    
+    <!-- 定义教师和课程的一对多关系映射 -->
+    <resultMap id="TeacherWithCoursesMap" type="com.wtu.entity.Teacher">
+        <id property="teacherId" column="teacher_id"/>
+        <result property="teacherName" column="teacher_name"/>
+        <result property="teacherAge" column="teacher_age"/>
+        <result property="teacherDescription" column="teacher_description"/>
+        <!-- 一对多关系映射，一个教师对应多门课程 -->
+        <collection property="courses" ofType="com.wtu.entity.Course">
+            <id property="courseId" column="course_id"/>
+            <result property="courseName" column="course_name"/>
+            <result property="courseType" column="course_type"/>
+            <result property="courseDescription" column="course_description"/>
+            <result property="teacherId" column="teacher_id"/>
+        </collection>
+    </resultMap>
+    
+    <!-- 根据教师姓名查询教师信息及其教授的所有课程 -->
+    <select id="getTeacherWithCoursesByName" resultMap="TeacherWithCoursesMap">
+        SELECT t.teacher_id, t.teacher_name, t.teacher_age, t.teacher_description,
+               c.course_id, c.course_name, c.course_type, c.course_description
+        FROM teacher t
+        LEFT JOIN course c ON t.teacher_id = c.teacher_id
+        WHERE t.teacher_name = #{teacherName}
+    </select>
+</mapper> 
