@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace表示命名空间，需要与对应的Mapper接口全限定名一致 -->
+<mapper namespace="com.wtu.mapper.AuthMapper">
+    
+    <!-- 根据用户名查询医生信息 -->
+    <select id="getDoctorByUsername" resultType="com.wtu.entity.Doctor">
+        SELECT *
+        FROM doctor
+        WHERE username = #{username}
+    </select>
+</mapper> 
