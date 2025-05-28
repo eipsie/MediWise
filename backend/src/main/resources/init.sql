@@ -71,10 +71,56 @@ CREATE TABLE medical_knowledge (
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'
 ) COMMENT '医学知识库';
 
+-- 血常规检查表
+CREATE TABLE blood_test (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键ID',
+    patient_id BIGINT NOT NULL COMMENT '患者ID',
+    diagnosis_id BIGINT COMMENT '关联诊断ID',
+    test_date DATETIME NOT NULL COMMENT '检查日期',
+    
+    -- 白细胞相关指标
+    WBC DECIMAL(6,2) COMMENT '白细胞计数(×10^9/L)',
+    LYMp DECIMAL(6,2) COMMENT '淋巴细胞百分比(%)',
+    MIDp DECIMAL(6,2) COMMENT '中间细胞百分比(%)',
+    NEUTp DECIMAL(6,2) COMMENT '中性粒细胞百分比(%)',
+    LYMn DECIMAL(6,2) COMMENT '淋巴细胞绝对值(×10^9/L)',
+    MIDn DECIMAL(6,2) COMMENT '中间细胞绝对值(×10^9/L)',
+    NEUTn DECIMAL(6,2) COMMENT '中性粒细胞绝对值(×10^9/L)',
+    
+    -- 红细胞相关指标
+    RBC DECIMAL(6,2) COMMENT '红细胞计数(×10^12/L)',
+    HGB DECIMAL(6,2) COMMENT '血红蛋白(g/L)',
+    HCT DECIMAL(6,2) COMMENT '红细胞压积(%)',
+    MCV DECIMAL(6,2) COMMENT '平均红细胞体积(fL)',
+    MCH DECIMAL(6,2) COMMENT '平均红细胞血红蛋白含量(pg)',
+    MCHC DECIMAL(6,2) COMMENT '平均红细胞血红蛋白浓度(g/L)',
+    RDWSD DECIMAL(6,2) COMMENT '红细胞分布宽度-标准差(fL)',
+    RDWCV DECIMAL(6,2) COMMENT '红细胞分布宽度-变异系数(%)',
+    
+    -- 血小板相关指标
+    PLT DECIMAL(6,2) COMMENT '血小板计数(×10^9/L)',
+    MPV DECIMAL(6,2) COMMENT '平均血小板体积(fL)',
+    PDW DECIMAL(6,2) COMMENT '血小板分布宽度(%)',
+    PCT DECIMAL(6,3) COMMENT '血小板压积(%)',
+    PLCR DECIMAL(6,2) COMMENT '大血小板比率(%)',
+    
+    -- 分析结果
+    analysis_result JSON COMMENT '机器学习分析结果JSON',
+    analysis_time DATETIME COMMENT '分析时间',
+    
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    
+    FOREIGN KEY (patient_id) REFERENCES patient(id) ON DELETE CASCADE,
+    FOREIGN KEY (diagnosis_id) REFERENCES diagnosis_record(id) ON DELETE SET NULL
+) COMMENT '血常规检查表';
+
 -- 创建索引提升查询性能
 CREATE INDEX idx_patient_name ON patient(name) COMMENT '患者姓名索引';
 CREATE INDEX idx_diagnosis_patient ON diagnosis_record(patient_id) COMMENT '诊断-患者关联索引';
 CREATE INDEX idx_diagnosis_doctor ON diagnosis_record(doctor_id) COMMENT '诊断-医生关联索引';
+CREATE INDEX idx_blood_test_patient ON blood_test(patient_id) COMMENT '血常规-患者关联索引';
+CREATE INDEX idx_blood_test_diagnosis ON blood_test(diagnosis_id) COMMENT '血常规-诊断关联索引';
 
 -- 插入默认管理员账号(密码: 123456)
 INSERT INTO doctor (id, username, password, real_name, status) VALUES 
