@@ -15,5 +15,14 @@ export const login = (data) => {
   })
 }
 
+// 注册API
+export const register = (data) => {
+  return request({
+    url: '/api/auth/register',
+    method: 'post',
+    data
+  })
+}
+
 // 导出请求实例，方便扩展其他API
 export default request 

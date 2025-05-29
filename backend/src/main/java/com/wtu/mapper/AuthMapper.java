@@ -19,5 +19,5 @@ public interface AuthMapper extends BaseMapper<Doctor> {
      * 注册新医生
      * @param doctor 医生信息对象
      */
-    void register(@Param("doctor") Doctor doctor);
+    void register(Doctor doctor);
 }
