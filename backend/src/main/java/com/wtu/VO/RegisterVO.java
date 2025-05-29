@@ -1,28 +1,19 @@
-package com.wtu.entity;
+package com.wtu.VO;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
 /**
- * 医生实体类
- * 对应数据库中的doctor表
+ * 医生注册返回视图对象
  */
 @Data
-@Builder
-@TableName("doctor")
-@Schema(description = "医生实体")
-public class Doctor {
-    
+@Schema(description = "医生注册返回视图对象")
+public class RegisterVO {
     /**
-     * 主键ID
+     * 医生ID
      */
-    @TableId(type = IdType.AUTO)
     @Schema(description = "医生ID", example = "1")
     private Long id;
     
@@ -31,12 +22,6 @@ public class Doctor {
      */
     @Schema(description = "登录用户名", example = "doctor_zhang")
     private String username;
-    
-    /**
-     * 登录密码(MD5加密)
-     */
-    @Schema(description = "登录密码(MD5加密)", example = "e10adc3949ba59abbe56e057f20f883e")
-    private String password;
     
     /**
      * 医生真实姓名

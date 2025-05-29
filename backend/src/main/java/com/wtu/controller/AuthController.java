@@ -1,7 +1,9 @@
 package com.wtu.controller;
 
 import com.wtu.VO.LoginVO;
+import com.wtu.VO.RegisterVO;
 import com.wtu.dto.LoginDTO;
+import com.wtu.dto.RegisterDTO;
 import com.wtu.entity.Doctor;
 import com.wtu.result.Result;
 import com.wtu.service.AuthService;
@@ -49,6 +51,25 @@ public class AuthController {
         } else {
             // 登录失败，返回错误信息
             return Result.error("用户名或密码错误");
+        }
+
+    }
+
+    /**
+     * 医生注册接口
+     * @param registerDTO 注册参数(用户名、密码等)
+     * @return 注册结果，成功返回医生信息，失败返回错误信息
+     */
+    @Operation(summary = "医生注册", description = "新用户注册")
+    @PostMapping("/register")
+    public Result<RegisterVO> register(@Parameter(description = "注册信息") @RequestBody RegisterDTO registerDTO) {
+        Doctor doctor = authService.register(registerDTO);
+        if(doctor != null) {
+            RegisterVO registerVO = new RegisterVO();
+            BeanUtils.copyProperties(doctor, registerVO);
+            return Result.success(registerVO);
+        }else{
+            return Result.error("用户名重复！！");
         }
     }
 } 
