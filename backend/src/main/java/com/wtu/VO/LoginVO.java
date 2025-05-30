@@ -16,12 +16,18 @@ public class LoginVO {
      */
     @Schema(description = "医生ID", example = "1")
     private Long id;
-    
+
     /**
      * 登录用户名
      */
     @Schema(description = "登录用户名", example = "doctor_zhang")
     private String username;
+
+    /**
+     * 登录令牌
+     */
+    @Schema(description = "登录令牌", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
+    private String token;
     
     /**
      * 医生真实姓名

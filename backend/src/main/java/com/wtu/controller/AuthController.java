@@ -37,16 +37,10 @@ public class AuthController {
     @PostMapping("/login")
     public Result<LoginVO> login(@Parameter(description = "登录信息") @RequestBody LoginDTO loginDTO) {
         // 调用服务层进行登录验证
-        Doctor doctor = authService.login(loginDTO.getUsername(), loginDTO.getPassword());
+        LoginVO loginVO = authService.login(loginDTO.getUsername(), loginDTO.getPassword());
         
         // 登录成功
-        if (doctor != null) {
-            // 创建返回对象，不包含敏感信息
-            LoginVO loginVO = new LoginVO();
-            // 属性拷贝，从doctor到loginVO
-            BeanUtils.copyProperties(doctor, loginVO);
-            
-            // 返回成功结果和登录信息
+        if (loginVO != null) {
             return Result.success(loginVO);
         } else {
             // 登录失败，返回错误信息

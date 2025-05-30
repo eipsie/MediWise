@@ -44,7 +44,7 @@ const handleLogin = async () => {
           // 存储用户信息到本地存储
           localStorage.setItem('userInfo', JSON.stringify(res.data.data))
           // 跳转到首页
-          router.push('/home')
+          await router.push('/home')
         } else {
           // 登录失败
           ElMessage.error(res.data.msg || '登录失败')

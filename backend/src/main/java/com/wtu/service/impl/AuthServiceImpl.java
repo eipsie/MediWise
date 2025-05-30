@@ -1,30 +1,41 @@
 package com.wtu.service.impl;
 
+import com.wtu.VO.LoginVO;
 import com.wtu.dto.RegisterDTO;
 import com.wtu.entity.Doctor;
 import com.wtu.mapper.AuthMapper;
+import com.wtu.properties.JwtProperties;
 import com.wtu.service.AuthService;
+import com.wtu.utils.JwtUtil;
 import com.wtu.utils.MD5Util;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * 认证服务实现类
  */
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
-    @Autowired
-    private AuthMapper authMapper;
+    private final AuthMapper authMapper;
+    private final JwtProperties jwtProperties;
 
     /**
      * 医生登录
      */
     @Override
-    public Doctor login(String username, String password) {
+    public LoginVO login(String username, String password) {
         // 1. 根据用户名查询医生信息
         Doctor doctor = authMapper.getDoctorByUsername(username);
         
@@ -42,10 +53,27 @@ public class AuthServiceImpl implements AuthService {
         if (!MD5Util.matches(password, doctor.getPassword())) {
             return null;
         }
-        
+
+        // 生成JWT令牌
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("id", doctor.getId());
+        claims.put("username", doctor.getUsername());
+
+        String token = JwtUtil.createJwt(
+                jwtProperties.getSecretKey(),
+                jwtProperties.getTtl(),
+                claims
+        );
+
         // 5. 登录成功，清空密码后返回医生信息
         doctor.setPassword(null);
-        return doctor;
+        LoginVO loginVO = new LoginVO();
+        // 将医生信息复制到登录视图对象
+        BeanUtils.copyProperties(doctor, loginVO);
+        // 设置登录令牌
+        loginVO.setToken(token);
+
+        return loginVO;
     }
 
     /**

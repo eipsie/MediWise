@@ -67,7 +67,7 @@ const handleRegister = async () => {
           // 注册成功
           ElMessage.success('注册成功，请登录')
           // 跳转到登录页
-          router.push('/login')
+          await router.push('/login')
         } else {
           // 注册失败
           ElMessage.error(res.data.msg || '注册失败')

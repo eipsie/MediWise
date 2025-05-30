@@ -18,7 +18,6 @@ public class SwaggerPrintConfig implements ApplicationRunner {
     public void run(ApplicationArguments args) {
         System.out.println("\n----------------------------------------------------------");
         System.out.println("API文档已启动，访问地址：");
-        System.out.println("Swagger UI: http://localhost:" + serverPort + "/swagger-ui.html");
         System.out.println("Knife4j UI: http://localhost:" + serverPort + "/doc.html");
         System.out.println("----------------------------------------------------------\n");
     }

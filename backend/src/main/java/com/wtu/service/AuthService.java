@@ -1,5 +1,6 @@
 package com.wtu.service;
 
+import com.wtu.VO.LoginVO;
 import com.wtu.dto.RegisterDTO;
 import com.wtu.entity.Doctor;
 
@@ -16,7 +17,7 @@ public interface AuthService {
      * @param password 密码
      * @return 登录成功返回医生信息，失败返回null
      */
-    Doctor login(String username, String password);
+    LoginVO login(String username, String password);
 
     /**
      * 医生注册
