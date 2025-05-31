@@ -21,6 +21,11 @@ spring:
 server:
   port: 9191  # 服务端口
 
+# 智谱GLM配置
+glm:
+  api-key: 6162ebc0805a4405ae8e29b94728905f.udduhRdonF2Pxa1K
+  url: https://open.bigmodel.cn/api/paas/v4/chat/completions
+
 app:
   jwt:
     secret-key: 12345678901234567890123456789012  # JWT 密钥，必须为 32 字符

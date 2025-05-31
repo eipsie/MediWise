@@ -1,7 +1,6 @@
 package com.wtu.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.wtu.entity.Teacher;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
