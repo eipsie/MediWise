@@ -1,16 +1,16 @@
 spring:
   application:
-    name: backend
+    name: ${APP_NAME:backend}
 
   datasource:
     # 数据源配置
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    driver-class-name: ${mediwise.datasource.driver-class-name}
     # 数据库连接地址
-    url: jdbc:mysql://47.121.181.198:3306/medi_wise?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://${mediwise.datasource.host}:${mediwise.datasource.port}/${mediwise.datasource.database}?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai}
     # 数据库用户名
-    username: root
+    username: ${mediwise.datasource.username}
     # 数据库密码
-    password: 123456
+    password: ${mediwise.datasource.password}
 
   servlet:
     multipart:
@@ -23,14 +23,14 @@ server:
 
 # 智谱GLM配置
 glm:
-  api-key: 6162ebc0805a4405ae8e29b94728905f.udduhRdonF2Pxa1K
-  url: https://open.bigmodel.cn/api/paas/v4/chat/completions
+  api-key: ${mediwise.glm.api-key} # Placeholder for GLM API Key
+  url: ${mediwise.glm.url}
 
 app:
   jwt:
-    secret-key: 12345678901234567890123456789012  # JWT 密钥，必须为 32 字符
-    ttl: 86400000  # 24小时有效期，单位毫秒
-    token-name: token  # JWT Token 名称
+    secret-key: ${mediwise.jwt.secret-key}  # JWT 密钥，必须为 32 字符 - Placeholder
+    ttl: ${mediwise.jwt.ttl}  # 24小时有效期，单位毫秒
+    token-name: ${mediwise.jwt.token-name}  # JWT Token 名称
 
 mybatis-plus:
   configuration:
