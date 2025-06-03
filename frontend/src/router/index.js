@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Login from '../views/Login.vue'
 import Register from '../views/Register.vue'
 import Home from '../views/Home.vue'
+import AiChat from '../views/AiChat.vue'
 
 // 路由配置
 const routes = [
@@ -26,6 +27,12 @@ const routes = [
     name: 'Home',
     component: Home,
     meta: { title: '首页', requiresAuth: true }
+  },
+  {
+    path: '/ai-chat',
+    name: 'AiChat',
+    component: AiChat,
+    meta: { title: 'AI智能问诊', requiresAuth: true }
   }
 ]
 

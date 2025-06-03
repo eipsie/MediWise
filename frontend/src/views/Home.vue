@@ -174,6 +174,10 @@ const handleCommand = (command) => {
               <div class="action-icon">🩺</div>
               <span>诊断记录</span>
             </div>
+            <div class="action-item" @click="router.push('/ai-chat')">
+              <div class="action-icon">🤖</div>
+              <span>AI智能问诊</span>
+            </div>
             <div class="action-item" @click="ElMessage.info('功能开发中...')">
               <div class="action-icon">💊</div>
               <span>药品管理</span>
@@ -181,10 +185,6 @@ const handleCommand = (command) => {
             <div class="action-item" @click="ElMessage.info('功能开发中...')">
               <div class="action-icon">📊</div>
               <span>数据统计</span>
-            </div>
-            <div class="action-item" @click="ElMessage.info('功能开发中...')">
-              <div class="action-icon">🔧</div>
-              <span>系统设置</span>
             </div>
             <div class="action-item" @click="logout">
               <div class="action-icon">🚪</div>

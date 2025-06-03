@@ -3,7 +3,7 @@ import axios from 'axios'
 // 创建axios实例
 const request = axios.create({
   baseURL: 'http://localhost:9191', // 后端API基础URL
-  timeout: 5000 // 请求超时时间
+  timeout: 30000 // 请求超时时间增加到30秒
 })
 
 // 登录API

@@ -11,7 +11,6 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -108,6 +107,7 @@ public class GlmServiceImpl implements GlmService {
             JsonNode usageNode = rootNode.path("usage");
             Integer totalTokens = usageNode.has("total_tokens") ? usageNode.path("total_tokens").asInt() : null;
 
+            logger.info("响应内容: {}, token {}", content, totalTokens);
             return Mono.just(new GlmChatVO(requestId, content, model, totalTokens));
 
         } catch (Exception e) {
