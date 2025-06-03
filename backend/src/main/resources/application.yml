@@ -8,7 +8,7 @@ spring:
     # 数据源配置
     driver-class-name: ${mediwise.datasource.driver-class-name}
     # 数据库连接地址
-    url: jdbc:mysql://${mediwise.datasource.host}:${mediwise.datasource.port}/${mediwise.datasource.database}?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai}
+    url: jdbc:mysql://${mediwise.datasource.host}:${mediwise.datasource.port}/${mediwise.datasource.database}?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
     # 数据库用户名
     username: ${mediwise.datasource.username}
     # 数据库密码
