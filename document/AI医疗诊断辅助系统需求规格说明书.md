@@ -110,7 +110,6 @@ rectangle "AI医疗诊断辅助系统" {
 }
 @enduml
 ```
-![img.png](image/img.png)
 ### 2.3 用户特征
 
 **医生用户：**
@@ -216,7 +215,6 @@ rectangle 用户管理模块 {
 管理员 --> UC_ROLE
 @enduml
 ```
-![img_1.png](image/img_1.png)
 #### 3.1.1 用户认证与注册 (FR-USER-1)
 
 - **FR-USER-1.1 用户注册**
@@ -271,7 +269,6 @@ rectangle 患者信息管理模块 {
 医生 --> UC_ALLERGY
 @enduml
 ```
-![img_2.png](image/img_2.png)
 #### 3.2.1 患者档案管理 (FR-PATIENT-1)
 
 - **FR-PATIENT-1.1 创建患者档案**
@@ -327,7 +324,6 @@ note right of UC_LLM_INFER
 end note
 @enduml
 ```
-![img_3.png](image/img_3.png)
 #### 3.3.1 症状信息录入 (FR-DIAGNOSIS-1)
 
 - **描述**：医生为患者录入当前症状和体征信息
@@ -408,7 +404,6 @@ note right of UC_PY_ANALYSIS
 end note
 @enduml
 ```
-![img_4.png](image/img_4.png)
 #### 3.4.1 血常规数据管理 (FR-BLOODTEST-1)
 
 - **FR-BLOODTEST-1.1 数据录入**
@@ -493,7 +488,6 @@ rectangle 数据统计分析模块 {
 医生 --> UC_CHART
 @enduml
 ```
-![img_5.png](image/img_5.png)
 #### 3.5.1 系统统计功能 (FR-STATISTICS-1)
 
 - **FR-STATISTICS-1.1 系统使用统计**
@@ -545,7 +539,6 @@ rectangle 系统审计模块 {
 note right of UC_LOG : 系统自动记录
 @enduml
 ```
-![img_6.png](image/img_6.png)
 #### 3.6.1 日志记录功能 (FR-AUDIT-1)
 
 - **描述**：系统自动记录用户关键操作
@@ -590,7 +583,6 @@ rectangle 数据导入导出模块 {
 管理员 --> UC_IE_LOG
 @enduml
 ```
-![img_7.png](image/img_7.png)
 #### 3.7.1 数据导入功能 (FR-IMPORT-EXPORT-1)
 
 - **FR-IMPORT-EXPORT-1.1 Excel数据导入**
@@ -638,7 +630,6 @@ rectangle 医学知识库模块 {
 管理员 --> UC_MAINTAIN
 @enduml
 ```
-![img_8.png](image/img_8.png)
 #### 3.8.1 知识查询功能 (FR-KNOWLEDGE-1)
 
 - **FR-KNOWLEDGE-1.1 疾病信息查询**
@@ -939,7 +930,6 @@ Doctor "1" -- "0..*" AuditLog : performs
 DiagnosisRecord "1" -- "0..*" LLMCallLog : generates
 @enduml
 ```
-![img_9.png](image/img_9.png)
 ### 6.2 核心数据表结构
 
 #### 6.2.1 医生表 (doctor)
@@ -1188,7 +1178,6 @@ note right of PythonService
 end note
 @enduml
 ```
-![img_10.png](image/img_10.png)
 ### 7.3 部署架构图
 
 ```
@@ -1230,7 +1219,6 @@ note top of [通义千问API]
 end note
 @enduml
 ```
-![img_11.png](image/img_11.png)
 
 **医疗诊断提示词模板**：
 
