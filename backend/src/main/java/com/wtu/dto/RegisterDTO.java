@@ -29,4 +29,15 @@ public class RegisterDTO {
     @Schema(description = "电子邮箱", example = "doctor_zhang@example.com")
     private String email;
     
+    /**
+     * 角色
+     */
+    @Schema(description = "角色(DOCTOR/ADMIN)", example = "DOCTOR", defaultValue = "DOCTOR")
+    private String role = "DOCTOR";
+    
+    /**
+     * 科室
+     */
+    @Schema(description = "科室", example = "内科")
+    private String department;
 } 

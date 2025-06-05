@@ -6,8 +6,8 @@
 <mapper namespace="com.wtu.mapper.AuthMapper">
     <insert id="register">
         insert into
-        doctor(username,password,email)
-        values (#{username},#{password},#{email})
+        doctor(username,password,email,role,department)
+        values (#{username},#{password},#{email},#{role},#{department})
     </insert>
 
     <!-- 根据用户名查询医生信息 -->

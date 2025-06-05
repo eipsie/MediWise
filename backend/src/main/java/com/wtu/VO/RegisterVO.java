@@ -30,6 +30,18 @@ public class RegisterVO {
     private String realName;
     
     /**
+     * 角色
+     */
+    @Schema(description = "角色(DOCTOR/ADMIN)", example = "DOCTOR")
+    private String role;
+    
+    /**
+     * 科室
+     */
+    @Schema(description = "科室", example = "内科")
+    private String department;
+    
+    /**
      * 电子邮箱
      */
     @Schema(description = "电子邮箱", example = "doctor_zhang@example.com")

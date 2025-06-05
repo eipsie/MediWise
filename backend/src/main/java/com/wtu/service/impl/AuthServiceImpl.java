@@ -90,6 +90,8 @@ public class AuthServiceImpl implements AuthService {
                    .username(registerDTO.getUsername())
                    .password(MD5Util.encrypt(registerDTO.getPassword()))
                    .email(registerDTO.getEmail())
+                   .role(registerDTO.getRole())
+                   .department(registerDTO.getDepartment())
                    .build();
            // 3. 保存到数据库
            authMapper.register(newDoctor);
