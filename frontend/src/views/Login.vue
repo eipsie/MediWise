@@ -40,21 +40,11 @@ const handleLogin = async () => {
         loading.value = true
         // 调用登录API
         const res = await login(loginForm)
-        console.log('登录响应数据:', res.data)
         if (res.data.code === 1) {
           // 设置jwt令牌
           const token = res.data.data.token
-          console.log('JWT token:', token)
           setToken(token)
           
-          // 尝试解析token看看结构
-          try {
-            const decoded = jwtDecode(token)
-            console.log('JWT解析结果:', decoded)
-          } catch (err) {
-            console.error('JWT解析失败:', err)
-          }
-
           ElMessage.success('登录成功')
       
           // 跳转到首页

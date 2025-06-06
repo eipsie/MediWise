@@ -13,13 +13,9 @@ const request = axios.create({
 request.interceptors.request.use(
   config => {
     const token = getToken()
-    console.log('请求拦截器中的token:', token)
     if (token) {
       // 确保Authorization头格式正确
       config.headers['Authorization'] = `Bearer ${token}`
-      console.log('添加到请求头的Authorization:', config.headers['Authorization'])
-    } else {
-      console.warn('未找到token，请求将不包含Authorization头')
     }
     return config
   },

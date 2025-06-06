@@ -1,6 +1,5 @@
 package com.wtu.service.impl;
 
-import com.wtu.VO.LoginVO;
 import com.wtu.dto.RegisterDTO;
 import com.wtu.entity.Doctor;
 import com.wtu.mapper.AuthMapper;
@@ -10,15 +9,11 @@ import com.wtu.utils.JwtUtil;
 import com.wtu.utils.MD5Util;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * 认证服务实现类
@@ -35,7 +30,7 @@ public class AuthServiceImpl implements AuthService {
      * 医生登录
      */
     @Override
-    public LoginVO login(String username, String password) {
+    public String login(String username, String password) {
         // 1. 根据用户名查询医生信息
         Doctor doctor = authMapper.getDoctorByUsername(username);
         
@@ -61,21 +56,12 @@ public class AuthServiceImpl implements AuthService {
         claims.put("realName", doctor.getRealName());
         claims.put("role", doctor.getRole());
 
-        String token = JwtUtil.createJwt(
+        // 直接返回JWT令牌
+        return JwtUtil.createJwt(
                 jwtProperties.getSecretKey(),
                 jwtProperties.getTtl(),
                 claims
         );
-
-        // 5. 登录成功，清空密码后返回医生信息
-        doctor.setPassword(null);
-        LoginVO loginVO = new LoginVO();
-        // 将医生信息复制到登录视图对象
-        BeanUtils.copyProperties(doctor, loginVO);
-        // 设置登录令牌
-        loginVO.setToken(token);
-
-        return loginVO;
     }
 
     /**
@@ -83,7 +69,7 @@ public class AuthServiceImpl implements AuthService {
      */
     @Override
     @Transactional
-    public Doctor register(RegisterDTO registerDTO) {
+    public boolean register(RegisterDTO registerDTO) {
        // 1. 检查用户名是否已存在
        Doctor doctor = authMapper.getDoctorByUsername(registerDTO.getUsername());
        if(doctor == null) {
@@ -97,10 +83,10 @@ public class AuthServiceImpl implements AuthService {
                    .build();
            // 3. 保存到数据库
            authMapper.register(newDoctor);
-           return newDoctor;
-       }else{
+           return true;
+       } else {
            // 4. 用户名已存在，注册失败
-           return null;
+           return false;
        }
     }
 } 

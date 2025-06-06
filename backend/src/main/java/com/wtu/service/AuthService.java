@@ -1,28 +1,24 @@
 package com.wtu.service;
 
-import com.wtu.VO.LoginVO;
 import com.wtu.dto.RegisterDTO;
-import com.wtu.entity.Doctor;
 
 /**
  * 认证服务接口
  */
 public interface AuthService {
-
-
-
+    
     /**
      * 医生登录
      * @param username 用户名
      * @param password 密码
-     * @return 登录成功返回医生信息，失败返回null
+     * @return JWT令牌字符串，登录失败返回null
      */
-    LoginVO login(String username, String password);
-
+    String login(String username, String password);
+    
     /**
      * 医生注册
-     * @param registerDTO 注册信息(用户名、密码等)
-     * @return 注册成功返回医生信息，失败返回null
+     * @param registerDTO 注册数据传输对象
+     * @return 注册是否成功
      */
-    Doctor register(RegisterDTO registerDTO);
+    boolean register(RegisterDTO registerDTO);
 }
