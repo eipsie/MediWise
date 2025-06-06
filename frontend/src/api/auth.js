@@ -1,10 +1,45 @@
 import axios from 'axios'
+import { getToken, removeToken } from '../utils/jwt'
+import { ElMessage } from 'element-plus'
+import router from '../router'
 
 // 创建axios实例
 const request = axios.create({
   baseURL: 'http://localhost:9191', // 后端API基础URL
   timeout: 30000 // 请求超时时间增加到30秒
 })
+
+// 添加请求拦截器
+request.interceptors.request.use(
+  config => {
+    const token = getToken()
+    console.log('请求拦截器中的token:', token)
+    if (token) {
+      // 确保Authorization头格式正确
+      config.headers['Authorization'] = `Bearer ${token}`
+      console.log('添加到请求头的Authorization:', config.headers['Authorization'])
+    } else {
+      console.warn('未找到token，请求将不包含Authorization头')
+    }
+    return config
+  },
+  error => Promise.reject(error)
+)
+
+// 添加响应拦截器
+request.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response) {
+      if (error.response.status === 401) {
+        ElMessage.error('登录已过期，请重新登录')
+        removeToken()
+        router.push('/login')
+      }
+    }
+    return Promise.reject(error)
+  }
+)
 
 // 登录API
 export const login = (data) => {

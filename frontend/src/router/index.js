@@ -3,6 +3,8 @@ import Login from '../views/Login.vue'
 import Register from '../views/Register.vue'
 import Home from '../views/Home.vue'
 import AiChat from '../views/AiChat.vue'
+import { getToken, getUserRole, isTokenExpired } from '../utils/jwt'
+import { ElMessage } from 'element-plus'
 
 // 路由配置
 const routes = [
@@ -26,14 +28,31 @@ const routes = [
     path: '/home',
     name: 'Home',
     component: Home,
-    meta: { title: '首页', requiresAuth: true }
+    meta: { 
+      title: '首页', 
+      requiresAuth: true,
+      roles: ['DOCTOR', 'ADMIN']
+    }
   },
   {
     path: '/ai-chat',
     name: 'AiChat',
     component: AiChat,
-    meta: { title: 'AI智能问诊', requiresAuth: true }
+    meta: { 
+      title: 'AI智能问诊', 
+      requiresAuth: true,
+      roles: ['DOCTOR']
+    }
+  },
+  {
+    path: '/403',
+    name: '403',
+    component: () => import('../views/403.vue'),
+    meta: {
+      title: '权限不足',
+    }
   }
+  
 ]
 
 // 创建路由实例
@@ -49,18 +68,29 @@ router.beforeEach((to, from, next) => {
   
   // 检查是否需要登录权限
   if (to.matched.some(record => record.meta.requiresAuth)) {
-    // 获取本地存储的用户信息
-    const userInfo = localStorage.getItem('userInfo')
-    
-    if (!userInfo) {
-      // 未登录，跳转到登录页
-      next({ path: '/login' })
-    } else {
-      // 已登录，允许访问
-      next()
+    const token = getToken()
+
+    if(!token || isTokenExpired()){
+      ElMessage.error('请先登录')
+      next({
+        path: '/login',
+        query: {redirect: to.fullPath}
+      })
+      return 
     }
+
+    // 检查角色权限
+    if(to.meta.roles){
+      const role = getUserRole()
+
+      if(!to.meta.roles.includes(role)){
+        ElMessage.error('您没有权限访问该页面')
+        next('/403')
+        return 
+      }
+    }
+    next()
   } else {
-    // 不需要登录权限的页面
     next()
   }
 })

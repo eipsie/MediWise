@@ -124,6 +124,7 @@ import {
   Delete
 } from '@element-plus/icons-vue';
 import { chatWithGlm } from '../api/glm';
+import { getToken } from '../utils/jwt';
 import 'element-plus/es/components/message/style/css';
 import 'element-plus/es/components/message-box/style/css';
 import markdownit from 'markdown-it';
@@ -274,6 +275,16 @@ const askSampleQuestion = (question) => {
 
 // 组件挂载后初始化
 onMounted(() => {
+  // 检查用户是否已登录
+  const token = getToken();
+  console.log('AiChat组件挂载时的Token:', token);
+  
+  if (!token) {
+    ElMessage.warning('未检测到登录信息，请重新登录');
+    router.push('/login');
+    return;
+  }
+  
   // 确保聊天容器开始是空的
   scrollToBottom();
 });

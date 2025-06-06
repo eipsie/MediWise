@@ -40,6 +40,13 @@ public class JwtTokenInterceptor implements HandlerInterceptor {
                 writeErrorResponse(response, "未提供认证令牌");
                 return false;
             }
+
+            // 处理Bearer前缀
+            if (token.startsWith("Bearer ")) {
+                log.info("检测到Bearer前缀，进行处理");
+                token = token.substring(7); // 去除"Bearer "前缀
+            }
+            
             try {
                 Claims claims = JwtUtil.parseJwt(jwtProperties.getSecretKey(), token);
                 log.info("检验token: {}", token);

@@ -2,6 +2,8 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { getUserInfo, getUserRole, removeToken, getToken } from '../utils/jwt'
+import { jwtDecode } from 'jwt-decode'
 
 // 获取路由实例
 const router = useRouter()
@@ -9,6 +11,7 @@ const router = useRouter()
 // 用户信息
 const userInfo = ref({})
 const loading = ref(true)
+const userRole = ref('')
 
 // 计算当前时间问候语
 const greeting = computed(() => {
@@ -29,19 +32,45 @@ const formatLastLoginTime = computed(() => {
 // 组件挂载时从本地存储获取用户信息
 onMounted(() => {
   try {
-    const storedUserInfo = localStorage.getItem('userInfo')
-    if (storedUserInfo) {
-      userInfo.value = JSON.parse(storedUserInfo)
+    // 从JWT中获取用户信息，不再使用localStorage
+    const token = getToken()
+    console.log('Home页面获取到的Token:', token)
+    
+    if (!token) {
+      ElMessage.warning('未检测到登录信息，请重新登录')
+      router.push('/login')
+      return
+    }
+    
+    // 尝试从JWT中解析用户信息
+    try {
+      const decoded = jwtDecode(token)
+      console.log('Home页面JWT解析结果:', decoded)
+      
+      // 尝试获取用户信息
+      const info = {
+        id: decoded.id,
+        username: decoded.username,
+        realName: decoded.realName,
+        role: decoded.role
+      }
+      
+      console.log('用户信息:', info)
+      
+      userInfo.value = info
+      userRole.value = info.role
+      
       setTimeout(() => {
         loading.value = false
       }, 500)
-    } else {
-      ElMessage.warning('未检测到登录信息，请重新登录')
+    } catch (err) {
+      console.error('JWT解析失败:', err)
+      ElMessage.error('登录信息无效，请重新登录')
       router.push('/login')
     }
-  } catch (error) {
-    console.error('解析用户信息失败:', error)
-    ElMessage.error('用户信息解析失败，请重新登录')
+  } catch (err) {
+    console.error('获取用户信息失败:', err)
+    ElMessage.error('获取用户信息失败，请重新登录')
     router.push('/login')
   }
 })
@@ -59,7 +88,8 @@ const logout = async () => {
         }
     )
 
-    localStorage.removeItem('userInfo')
+    // 使用removeToken
+    removeToken()
     ElMessage.success('已安全退出')
     router.push('/login')
   } catch {

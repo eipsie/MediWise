@@ -58,6 +58,8 @@ public class AuthServiceImpl implements AuthService {
         Map<String, Object> claims = new HashMap<>();
         claims.put("id", doctor.getId());
         claims.put("username", doctor.getUsername());
+        claims.put("realName", doctor.getRealName());
+        claims.put("role", doctor.getRole());
 
         String token = JwtUtil.createJwt(
                 jwtProperties.getSecretKey(),

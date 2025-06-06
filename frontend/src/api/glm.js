@@ -1,4 +1,5 @@
 import request from './auth' // 复用已有的axios实例
+import { getToken } from '../utils/jwt' // 导入getToken函数
 
 /**
  * 发送聊天请求到GLM大模型
@@ -10,6 +11,10 @@ import request from './auth' // 复用已有的axios实例
  * @returns {Promise} - 返回请求Promise
  */
 export const chatWithGlm = (data) => {
+  // 调试：检查token是否存在
+  const token = getToken();
+  console.log('AI聊天请求前的Token:', token);
+  
   return request({
     url: '/api/chat',
     method: 'post',

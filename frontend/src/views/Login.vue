@@ -3,6 +3,8 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { login } from '../api/auth'
+import { setToken } from '../utils/jwt'
+import { jwtDecode } from 'jwt-decode'
 
 // 获取路由实例
 const router = useRouter()
@@ -38,15 +40,26 @@ const handleLogin = async () => {
         loading.value = true
         // 调用登录API
         const res = await login(loginForm)
+        console.log('登录响应数据:', res.data)
         if (res.data.code === 1) {
-          // 登录成功
+          // 设置jwt令牌
+          const token = res.data.data.token
+          console.log('JWT token:', token)
+          setToken(token)
+          
+          // 尝试解析token看看结构
+          try {
+            const decoded = jwtDecode(token)
+            console.log('JWT解析结果:', decoded)
+          } catch (err) {
+            console.error('JWT解析失败:', err)
+          }
+
           ElMessage.success('登录成功')
-          // 存储用户信息到本地存储
-          localStorage.setItem('userInfo', JSON.stringify(res.data.data))
+      
           // 跳转到首页
           await router.push('/home')
         } else {
-          // 登录失败
           ElMessage.error(res.data.msg || '登录失败')
         }
       } catch (error) {
