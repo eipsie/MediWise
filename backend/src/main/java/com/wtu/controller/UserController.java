@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@Tag(name = "GLM聊天接口", description = "提供与智谱GLM大模型交互的API")
+@Tag(name = "GLM聊天接口", description = "智谱GLM")
 @RequestMapping("/api")
 @RequiredArgsConstructor
 public class UserController {
