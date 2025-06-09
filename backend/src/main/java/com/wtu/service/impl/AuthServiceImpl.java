@@ -1,5 +1,6 @@
 package com.wtu.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.wtu.dto.RegisterDTO;
 import com.wtu.entity.Doctor;
 import com.wtu.mapper.AuthMapper;
@@ -12,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,8 +33,10 @@ public class AuthServiceImpl implements AuthService {
      */
     @Override
     public String login(String username, String password) {
-        // 1. 根据用户名查询医生信息
-        Doctor doctor = authMapper.getDoctorByUsername(username);
+        // 1. 根据用户名查询医生信息 - 使用MyBatis-Plus的LambdaQueryWrapper
+        LambdaQueryWrapper<Doctor> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Doctor::getUsername, username);
+        Doctor doctor = authMapper.selectOne(queryWrapper);
         
         // 2. 判断医生是否存在
         if (doctor == null) {
@@ -70,9 +74,12 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public boolean register(RegisterDTO registerDTO) {
-       // 1. 检查用户名是否已存在
-       Doctor doctor = authMapper.getDoctorByUsername(registerDTO.getUsername());
-       if(doctor == null) {
+       // 1. 检查用户名是否已存在 - 使用MyBatis-Plus的LambdaQueryWrapper
+       LambdaQueryWrapper<Doctor> queryWrapper = new LambdaQueryWrapper<>();
+       queryWrapper.eq(Doctor::getUsername, registerDTO.getUsername());
+       Doctor existingDoctor = authMapper.selectOne(queryWrapper);
+       
+       if(existingDoctor == null) {
            // 2. 创建新医生对象并设置属性
            Doctor newDoctor = Doctor.builder()
                    .username(registerDTO.getUsername())
@@ -80,10 +87,14 @@ public class AuthServiceImpl implements AuthService {
                    .email(registerDTO.getEmail())
                    .role(registerDTO.getRole())
                    .department(registerDTO.getDepartment())
+                   .status(1) // 默认为启用状态
+                   .createTime(LocalDateTime.now())
+                   .updateTime(LocalDateTime.now())
                    .build();
-           // 3. 保存到数据库
-           authMapper.register(newDoctor);
-           return true;
+           
+           // 3. 保存到数据库 - 使用MyBatis-Plus的insert方法
+           int rows = authMapper.insert(newDoctor);
+           return rows > 0;
        } else {
            // 4. 用户名已存在，注册失败
            return false;
