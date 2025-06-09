@@ -67,42 +67,25 @@ CREATE INDEX idx_diagnosis_doctor ON diagnosis_record(doctor_id) COMMENT '诊断
 CREATE INDEX idx_diagnosis_time ON diagnosis_record(diagnosis_time) COMMENT '诊断时间索引';
 CREATE INDEX idx_diagnosis_status ON diagnosis_record(status) COMMENT '诊断状态索引';
 
--- 血常规表
+-- 血常规表 (更新为需求文档中定义的结构)
 CREATE TABLE blood_test (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键ID',
     patient_id BIGINT NOT NULL COMMENT '患者ID',
-    diagnosis_record_id BIGINT COMMENT '诊断记录ID',
     test_date DATETIME NOT NULL COMMENT '检测日期',
     WBC DECIMAL(6,2) COMMENT '白细胞计数',
-    LYMp DECIMAL(5,1) COMMENT '淋巴细胞百分比',
-    MIDp DECIMAL(5,1) COMMENT '中间细胞百分比',
-    NEUTp DECIMAL(5,1) COMMENT '中性粒细胞百分比',
-    LYMn DECIMAL(6,2) COMMENT '淋巴细胞绝对值',
-    MIDn DECIMAL(6,2) COMMENT '中间细胞绝对值',
-    NEUTn DECIMAL(6,2) COMMENT '中性粒细胞绝对值',
     RBC DECIMAL(6,2) COMMENT '红细胞计数',
     HGB DECIMAL(6,1) COMMENT '血红蛋白',
-    HCT DECIMAL(5,1) COMMENT '红细胞压积',
-    MCV DECIMAL(6,1) COMMENT '平均红细胞体积',
-    MCH DECIMAL(6,1) COMMENT '平均红细胞血红蛋白含量',
-    MCHC DECIMAL(6,1) COMMENT '平均红细胞血红蛋白浓度',
-    RDWSD DECIMAL(6,1) COMMENT '红细胞分布宽度SD',
-    RDWCV DECIMAL(5,1) COMMENT '红细胞分布宽度CV',
     PLT DECIMAL(6,1) COMMENT '血小板计数',
-    MPV DECIMAL(5,1) COMMENT '平均血小板体积',
-    PDW DECIMAL(5,1) COMMENT '血小板分布宽度',
-    PCT DECIMAL(5,3) COMMENT '血小板压积',
-    PLCR DECIMAL(5,1) COMMENT '大血小板比率',
-    python_analysis_result JSON COMMENT 'Python AI分析结果',
+    NEUTp DECIMAL(5,1) COMMENT '中性粒细胞百分比',
+    LYMp DECIMAL(5,1) COMMENT '淋巴细胞百分比',
+    ai_analysis_result JSON COMMENT 'AI分析结果',
     create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    FOREIGN KEY (patient_id) REFERENCES patient(id),
-    FOREIGN KEY (diagnosis_record_id) REFERENCES diagnosis_record(id) ON DELETE SET NULL
+    FOREIGN KEY (patient_id) REFERENCES patient(id)
 ) COMMENT '血常规检查表';
 
 -- 创建血常规表的索引
 CREATE INDEX idx_blood_test_patient ON blood_test(patient_id) COMMENT '血常规-患者关联索引';
-CREATE INDEX idx_blood_test_diagnosis ON blood_test(diagnosis_record_id) COMMENT '血常规-诊断关联索引';
 CREATE INDEX idx_blood_test_date ON blood_test(test_date) COMMENT '血常规-检测日期索引';
 
 -- 医学知识库表
@@ -128,51 +111,29 @@ CREATE INDEX idx_knowledge_disease ON medical_knowledge(disease_name) COMMENT '�
 CREATE INDEX idx_knowledge_drug ON medical_knowledge(drug_name) COMMENT '知识库-药品名称索引';
 CREATE INDEX idx_knowledge_status ON medical_knowledge(status) COMMENT '知识库-状态索引';
 
--- 审计日志表
-CREATE TABLE audit_log (
+-- 系统日志表 (按照需求文档中的新表定义)
+CREATE TABLE system_log (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键ID',
+    log_type VARCHAR(20) NOT NULL COMMENT '日志类型：OPERATION/ERROR/AI_CALL',
     user_id BIGINT COMMENT '用户ID',
-    username VARCHAR(50) NOT NULL COMMENT '用户名',
+    username VARCHAR(50) COMMENT '用户名',
     action_type VARCHAR(50) NOT NULL COMMENT '操作类型',
-    target_type VARCHAR(50) NOT NULL COMMENT '目标类型',
-    target_id VARCHAR(100) NOT NULL COMMENT '目标ID',
+    action_desc VARCHAR(200) COMMENT '操作描述',
+    target_id VARCHAR(50) COMMENT '操作对象ID',
     ip_address VARCHAR(45) COMMENT 'IP地址',
-    user_agent VARCHAR(255) COMMENT '用户代理',
-    request_params JSON COMMENT '请求参数',
-    response_status VARCHAR(20) COMMENT '响应状态',
-    error_message TEXT COMMENT '错误信息',
-    operation_time DATETIME NOT NULL COMMENT '操作时间',
+    status VARCHAR(20) NOT NULL COMMENT '状态：SUCCESS/FAILED/ERROR',
+    error_message VARCHAR(500) COMMENT '错误信息',
+    log_time DATETIME NOT NULL COMMENT '操作时间',
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     FOREIGN KEY (user_id) REFERENCES doctor(id) ON DELETE SET NULL
-) COMMENT '审计日志表';
+) COMMENT '系统日志表';
 
--- 创建审计日志表的索引
-CREATE INDEX idx_audit_user ON audit_log(user_id) COMMENT '审计日志-用户索引';
-CREATE INDEX idx_audit_action ON audit_log(action_type) COMMENT '审计日志-操作类型索引';
-CREATE INDEX idx_audit_time ON audit_log(operation_time) COMMENT '审计日志-操作时间索引';
-
--- 大模型调用日志表
-CREATE TABLE llm_call_log (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键ID',
-    diagnosis_record_id BIGINT COMMENT '诊断记录ID',
-    user_id BIGINT COMMENT '用户ID',
-    llm_provider VARCHAR(50) NOT NULL COMMENT 'LLM提供商',
-    model_name VARCHAR(100) NOT NULL COMMENT '模型名称',
-    prompt_tokens INT NOT NULL COMMENT '提示词Token数量',
-    completion_tokens INT NOT NULL COMMENT '完成词Token数量',
-    total_tokens INT NOT NULL COMMENT '总Token数量',
-    call_duration INT NOT NULL COMMENT '调用耗时(毫秒)',
-    status VARCHAR(20) NOT NULL COMMENT '调用状态',
-    error_message TEXT COMMENT '错误信息',
-    call_time DATETIME NOT NULL COMMENT '调用时间',
-    FOREIGN KEY (diagnosis_record_id) REFERENCES diagnosis_record(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES doctor(id) ON DELETE SET NULL
-) COMMENT '大模型调用日志表';
-
--- 创建大模型调用日志表的索引
-CREATE INDEX idx_llm_diagnosis ON llm_call_log(diagnosis_record_id) COMMENT '大模型调用-诊断索引';
-CREATE INDEX idx_llm_user ON llm_call_log(user_id) COMMENT '大模型调用-用户索引';
-CREATE INDEX idx_llm_time ON llm_call_log(call_time) COMMENT '大模型调用-时间索引';
-CREATE INDEX idx_llm_status ON llm_call_log(status) COMMENT '大模型调用-状态索引';
+-- 创建系统日志表的索引
+CREATE INDEX idx_syslog_type ON system_log(log_type) COMMENT '系统日志-类型索引';
+CREATE INDEX idx_syslog_user ON system_log(user_id) COMMENT '系统日志-用户索引';
+CREATE INDEX idx_syslog_action ON system_log(action_type) COMMENT '系统日志-操作类型索引';
+CREATE INDEX idx_syslog_time ON system_log(log_time) COMMENT '系统日志-操作时间索引';
+CREATE INDEX idx_syslog_status ON system_log(status) COMMENT '系统日志-状态索引';
 
 -- 插入默认管理员账号(密码: 123456)
 INSERT INTO doctor (id, username, password, real_name, role, status) VALUES 
