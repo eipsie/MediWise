@@ -2,9 +2,9 @@ package com.wtu.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.wtu.VO.GlmChatVO;
+import com.wtu.VO.ai.GlmChatVO;
 import com.wtu.config.GlmConfig;
-import com.wtu.dto.GlmChatDTO;
+import com.wtu.dto.ai.GlmChatDTO;
 import com.wtu.exception.GlmApiException;
 import com.wtu.service.GlmService;
 import jakarta.annotation.PostConstruct;

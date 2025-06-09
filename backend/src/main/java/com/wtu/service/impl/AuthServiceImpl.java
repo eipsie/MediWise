@@ -1,7 +1,7 @@
 package com.wtu.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.wtu.dto.RegisterDTO;
+import com.wtu.dto.auth.RegisterDTO;
 import com.wtu.entity.Doctor;
 import com.wtu.mapper.AuthMapper;
 import com.wtu.properties.JwtProperties;

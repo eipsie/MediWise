@@ -1,11 +1,11 @@
 package com.wtu.controller;
 
-import com.wtu.dto.LoginDTO;
-import com.wtu.dto.RegisterDTO;
+import com.wtu.dto.auth.LoginDTO;
+import com.wtu.dto.auth.RegisterDTO;
 import com.wtu.entity.Doctor;
 import com.wtu.result.Result;
 import com.wtu.service.AuthService;
-import com.wtu.VO.LoginVO;
+import com.wtu.VO.auth.LoginVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;

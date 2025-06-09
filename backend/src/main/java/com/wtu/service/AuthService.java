@@ -1,6 +1,6 @@
 package com.wtu.service;
 
-import com.wtu.dto.RegisterDTO;
+import com.wtu.dto.auth.RegisterDTO;
 
 /**
  * 认证服务接口

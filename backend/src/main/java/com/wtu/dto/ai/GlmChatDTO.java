@@ -1,4 +1,4 @@
-package com.wtu.dto;
+package com.wtu.dto.ai;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -67,5 +67,4 @@ public class GlmChatDTO {
         this.stream = false; // 非流式输出的默认值
         this.temperature = 0.95f; // 为 temperature 设置一个常用的默认值
     }
-
-}
+} 

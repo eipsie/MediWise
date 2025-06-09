@@ -1,8 +1,8 @@
 package com.wtu.service;
 
 
-import com.wtu.VO.GlmChatVO;
-import com.wtu.dto.GlmChatDTO;
+import com.wtu.VO.ai.GlmChatVO;
+import com.wtu.dto.ai.GlmChatDTO;
 
 public interface GlmService {
     /**

@@ -1,7 +1,7 @@
 package com.wtu.controller;
 
-import com.wtu.VO.GlmChatVO;
-import com.wtu.dto.GlmChatDTO;
+import com.wtu.VO.ai.GlmChatVO;
+import com.wtu.dto.ai.GlmChatDTO;
 import com.wtu.result.Result;
 import com.wtu.service.GlmService;
 import io.swagger.v3.oas.annotations.tags.Tag;
