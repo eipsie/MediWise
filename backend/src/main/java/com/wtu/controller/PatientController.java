@@ -5,6 +5,9 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.wtu.VO.common.PageVO;
 import com.wtu.VO.patient.PatientVO;
+import com.wtu.annotation.AdminOnly;
+import com.wtu.annotation.DoctorOnly;
+import com.wtu.annotation.PatientCreatorOrAdmin;
 import com.wtu.dto.patient.PatientCreateDTO;
 import com.wtu.dto.patient.PatientQueryDTO;
 import com.wtu.dto.patient.PatientUpdateDTO;
@@ -20,6 +23,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -48,6 +52,7 @@ public class PatientController {
      * @return 创建的患者
      */
     @PostMapping
+    @DoctorOnly
     @Operation(summary = "创建患者", description = "创建新的患者记录")
     public Result<PatientVO> createPatient(@RequestBody PatientCreateDTO dto) {
         // 验证参数
@@ -90,6 +95,7 @@ public class PatientController {
      * @return 更新后的患者
      */
     @PutMapping("/{id}")
+    @PatientCreatorOrAdmin
     @Operation(summary = "更新患者", description = "更新指定ID的患者信息")
     public Result<PatientVO> updatePatient(
             @Parameter(description = "患者ID") @PathVariable Long id, 
@@ -143,6 +149,7 @@ public class PatientController {
      * @return 结果
      */
     @DeleteMapping("/{id}")
+    @PatientCreatorOrAdmin
     @Operation(summary = "删除患者", description = "删除指定ID的患者")
     public Result<Void> deletePatient(@Parameter(description = "患者ID") @PathVariable Long id) {
         // 检查患者是否存在
@@ -166,6 +173,7 @@ public class PatientController {
      * @return 患者信息
      */
     @GetMapping("/{id}")
+    @PatientCreatorOrAdmin
     @Operation(summary = "查询患者", description = "根据ID查询患者详情")
     public Result<PatientVO> getPatientById(@Parameter(description = "患者ID") @PathVariable Long id) {
         Patient patient = patientService.getPatientById(id);
@@ -193,6 +201,7 @@ public class PatientController {
      * @return 患者信息
      */
     @GetMapping("/no/{patientNo}")
+    @PreAuthorize("hasAnyRole('DOCTOR', 'ADMIN')")
     @Operation(summary = "根据编号查询", description = "根据患者编号查询患者详情")
     public Result<PatientVO> getPatientByPatientNo(@Parameter(description = "患者编号") @PathVariable String patientNo) {
         if (!StringUtils.hasText(patientNo)) {
@@ -220,10 +229,11 @@ public class PatientController {
 
     /**
      * 分页查询患者列表
-     * @param queryDTO 查询条件
+     * @param queryDTO 查询参数
      * @return 分页结果
      */
     @PostMapping("/page")
+    @PreAuthorize("hasAnyRole('DOCTOR', 'ADMIN')")
     @Operation(summary = "分页查询", description = "分页查询患者列表，支持条件过滤")
     public Result<PageVO<PatientVO>> pagePatients(@RequestBody PatientQueryDTO queryDTO) {
         // 确保查询参数不为空
@@ -274,15 +284,16 @@ public class PatientController {
     }
     
     /**
-     * GET方式分页查询(兼容前端Form表单提交)
+     * GET方式分页查询患者列表
      * @param current 当前页码
      * @param size 每页大小
-     * @param name 患者姓名(可选)
-     * @param idCard 身份证号(可选)
-     * @param phone 电话号码(可选)
+     * @param name 患者姓名
+     * @param idCard 身份证号
+     * @param phone 电话号码
      * @return 分页结果
      */
     @GetMapping("/page")
+    @PreAuthorize("hasAnyRole('DOCTOR', 'ADMIN')")
     @Operation(summary = "GET方式分页查询", description = "分页查询患者列表，支持条件过滤(兼容表单提交)")
     public Result<PageVO<PatientVO>> pagePatientsByGet(
             @Parameter(description = "当前页码") @RequestParam(defaultValue = "1") Integer current,
@@ -304,10 +315,11 @@ public class PatientController {
     }
 
     /**
-     * 查询当前医生创建的患者列表
+     * 查询当前登录医生创建的患者列表
      * @return 患者列表
      */
     @GetMapping("/my-patients")
+    @DoctorOnly
     @Operation(summary = "我的患者", description = "查询当前登录医生创建的患者列表")
     public Result<List<PatientVO>> getMyPatients() {
         // 获取当前登录用户

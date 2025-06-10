@@ -10,9 +10,15 @@ import com.wtu.utils.JwtUtil;
 import com.wtu.utils.MD5Util;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.print.Doc;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,45 +33,43 @@ public class AuthServiceImpl implements AuthService {
 
     private final AuthMapper authMapper;
     private final JwtProperties jwtProperties;
+    private final AuthenticationManager authenticationManager;
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * 医生登录
      */
     @Override
     public String login(String username, String password) {
-        // 1. 根据用户名查询医生信息 - 使用MyBatis-Plus的LambdaQueryWrapper
-        LambdaQueryWrapper<Doctor> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Doctor::getUsername, username);
-        Doctor doctor = authMapper.selectOne(queryWrapper);
-        
-        // 2. 判断医生是否存在
-        if (doctor == null) {
-            return null;
-        }
-        
-        // 3. 判断状态是否正常
-        if (doctor.getStatus() != 1) {
-            return null;
-        }
-        
-        // 4. 使用MD5Util工具类验证密码
-        if (!MD5Util.matches(password, doctor.getPassword())) {
-            return null;
-        }
+        try {
+            
+            // 使用Spring Security的AuthenticationManager进行认证
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(username, password)
+            );
 
-        // 生成JWT令牌
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("id", doctor.getId());
-        claims.put("username", doctor.getUsername());
-        claims.put("realName", doctor.getRealName());
-        claims.put("role", doctor.getRole());
+            // 认证成功, 查询用户详情
+            LambdaQueryWrapper<Doctor> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(Doctor::getUsername, username);
+            Doctor doctor = authMapper.selectOne(queryWrapper);
 
-        // 直接返回JWT令牌
-        return JwtUtil.createJwt(
-                jwtProperties.getSecretKey(),
-                jwtProperties.getTtl(),
-                claims
-        );
+            // 生成JWT令牌
+            Map<String, Object> claims = new HashMap<>();
+            claims.put("id", doctor.getId());
+            claims.put("username", doctor.getUsername());
+            claims.put("realName", doctor.getRealName());
+            claims.put("role", doctor.getRole());
+
+            // 返回JWT
+            return JwtUtil.createJwt(
+                    jwtProperties.getSecretKey(),
+                    jwtProperties.getTtl(),
+                    claims
+            );
+        } catch (AuthenticationException e){
+            log.error("登录失败: {}", e.getMessage());
+            return null; // 登录失败返回null
+        }
     }
 
     /**
@@ -74,7 +78,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public boolean register(RegisterDTO registerDTO) {
-       // 1. 检查用户名是否已存在 - 使用MyBatis-Plus的LambdaQueryWrapper
+       // 1. 检查用户名是否已存在
        LambdaQueryWrapper<Doctor> queryWrapper = new LambdaQueryWrapper<>();
        queryWrapper.eq(Doctor::getUsername, registerDTO.getUsername());
        Doctor existingDoctor = authMapper.selectOne(queryWrapper);
@@ -83,7 +87,7 @@ public class AuthServiceImpl implements AuthService {
            // 2. 创建新医生对象并设置属性
            Doctor newDoctor = Doctor.builder()
                    .username(registerDTO.getUsername())
-                   .password(MD5Util.encrypt(registerDTO.getPassword()))
+                   .password(passwordEncoder.encode(registerDTO.getPassword())) // 使用Spring Security的BCrypt加密
                    .email(registerDTO.getEmail())
                    .role(registerDTO.getRole())
                    .department(registerDTO.getDepartment())
@@ -92,7 +96,7 @@ public class AuthServiceImpl implements AuthService {
                    .updateTime(LocalDateTime.now())
                    .build();
            
-           // 3. 保存到数据库 - 使用MyBatis-Plus的insert方法
+           // 3. 保存到数据库
            int rows = authMapper.insert(newDoctor);
            return rows > 0;
        } else {

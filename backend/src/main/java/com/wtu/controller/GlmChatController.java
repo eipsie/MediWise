@@ -1,6 +1,7 @@
 package com.wtu.controller;
 
 import com.wtu.VO.ai.GlmChatVO;
+import com.wtu.annotation.DoctorOnly;
 import com.wtu.dto.ai.GlmChatDTO;
 import com.wtu.result.Result;
 import com.wtu.service.GlmService;
@@ -32,6 +33,7 @@ public class GlmChatController {
      * @return Result<GlmChatVO> 对象，成功时 HTTP 状态码默认为 200 OK。
      */
     @PostMapping("/chat")
+    @DoctorOnly
     public Result<GlmChatVO> chatWithGlm(@RequestBody GlmChatDTO chatRequest) {
         // 基本的请求校验
         if (chatRequest.getMessages() == null || chatRequest.getMessages().isEmpty()) {

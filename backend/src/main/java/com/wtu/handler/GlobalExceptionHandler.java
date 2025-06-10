@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -54,6 +55,18 @@ public class GlobalExceptionHandler {
         logger.warn("请求参数无效 (IllegalArgumentException): {}", e.getMessage(), e); // 可以选择不打印完整堆栈 e
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Result.error("请求参数错误: " + e.getMessage()));
+    }
+    
+    /**
+     * 处理Spring Security权限不足异常
+     * @param e AccessDeniedException 实例
+     * @return ResponseEntity 包装的 Result 对象，HTTP 状态为 403 Forbidden。
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Result<Object>> handleAccessDeniedException(AccessDeniedException e) {
+        logger.warn("权限不足 (AccessDeniedException): {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Result.error("权限不足，无法执行此操作"));
     }
 
     /**
