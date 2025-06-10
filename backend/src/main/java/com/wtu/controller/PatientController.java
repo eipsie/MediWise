@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @RestController
-@RequestMapping("/patients")
+@RequestMapping("/api/patients")
 @RequiredArgsConstructor
 @Tag(name = "患者管理", description = "患者信息管理相关接口")
 public class PatientController {
