@@ -59,6 +59,16 @@ public class SecurityService {
     }
     
     /**
+     * 根据用户名获取当前用户ID
+     * @param username 用户名
+     * @return 用户ID，如果用户不存在则返回null
+     */
+    public Long getCurrentUserId(String username) {
+        Doctor doctor = getDoctorByUsername(username);
+        return doctor != null ? doctor.getId() : null;
+    }
+    
+    /**
      * 根据用户名获取医生信息
      */
     private Doctor getDoctorByUsername(String username) {

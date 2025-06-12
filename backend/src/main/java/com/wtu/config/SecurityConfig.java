@@ -34,7 +34,7 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        // 禁用CSRF保护
+        // 定义不需要认证的公共路径
         List<String> permitAllPaths = Arrays.asList(
                 "/api/auth/login",
                 "/api/auth/register",
@@ -52,13 +52,11 @@ public class SecurityConfig {
                 .httpBasic(AbstractHttpConfigurer::disable) // 禁用HTTP基本认证
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(permitAllPaths.toArray(new String[0])).permitAll() // 允许指定路径不需要认证
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN") // 管理员接口需要ADMIN角色
-                        .requestMatchers("/api/patients/**").hasAnyRole("DOCTOR", "ADMIN") // 医生和管理员可以访问患者相关接口
-                        .anyRequest().authenticated() // 其他请求需要认证
-                ).addFilterBefore((Filter) jwtSecurityFilter, UsernamePasswordAuthenticationFilter.class);
+                        .anyRequest().authenticated() // 其他所有请求都需要认证，具体权限由方法级注解控制
+                )
+                .addFilterBefore((Filter) jwtSecurityFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
-
     }
 
     @Bean

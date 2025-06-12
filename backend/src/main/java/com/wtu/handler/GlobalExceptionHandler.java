@@ -1,5 +1,6 @@
 package com.wtu.handler;
 
+import com.wtu.exception.BusinessException;
 import com.wtu.exception.GlmApiException;
 import com.wtu.result.Result;
 import org.slf4j.Logger;
@@ -7,8 +8,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.List;
 
 /**
  * 全局异常处理器
@@ -20,7 +26,23 @@ public class GlobalExceptionHandler {
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     /**
-     * 处理自定义的 GlmApiException。
+     * 处理业务异常
+     * @param e 业务异常
+     * @return ResponseEntity 包装的 Result 对象
+     */
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<Result<Object>> handleBusinessException(BusinessException e) {
+        logger.error("业务异常: {}", e.getMessage());
+        Result<Object> result = Result.error(e.getMessage());
+        // 如果业务异常的code不是0，则设置为自定义code，否则保持默认的0
+        if (e.getCode() != null && e.getCode() != 0) {
+            result.setCode(e.getCode());
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
+    }
+    
+    /**
+     * 处理自定义的 GlmApiException
      * @param e GlmApiException 实例
      * @return ResponseEntity 包装的 Result 对象
      */
@@ -35,14 +57,35 @@ public class GlobalExceptionHandler {
         if (e.getStatusCode() >= 400 && e.getStatusCode() < 500) {
             statusToReturn = HttpStatus.BAD_REQUEST; // 例如，API密钥错误等返回4xx
         }
-        // 如果 GlmApiException statusCode 就是 HTTP 状态码，可以直接使用
-        // HttpStatus resolvedStatus = HttpStatus.resolve(e.getStatusCode());
-        // if (resolvedStatus != null) {
-        //    statusToReturn = resolvedStatus;
-        // }
 
-        return ResponseEntity.status(statusToReturn)
-                .body(Result.error("GLM服务调用时发生错误: " + e.getMessage()));
+        // 创建错误响应，确保code为0表示错误
+        Result<Object> result = Result.error("GLM服务调用时发生错误: " + e.getMessage());
+        
+        return ResponseEntity.status(statusToReturn).body(result);
+    }
+
+    /**
+     * 处理参数校验异常
+     * @param e 参数校验异常
+     * @return ResponseEntity 包装的 Result 对象
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Result<Object>> handleValidationException(MethodArgumentNotValidException e) {
+        BindingResult bindingResult = e.getBindingResult();
+        List<FieldError> fieldErrors = bindingResult.getFieldErrors();
+        StringBuilder errorMsg = new StringBuilder("参数校验失败: ");
+        
+        for (FieldError fieldError : fieldErrors) {
+            errorMsg.append(fieldError.getField())
+                    .append(":")
+                    .append(fieldError.getDefaultMessage())
+                    .append(", ");
+        }
+        
+        String message = errorMsg.substring(0, errorMsg.length() - 2);
+        logger.error(message);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Result.error(message));
     }
 
     /**
