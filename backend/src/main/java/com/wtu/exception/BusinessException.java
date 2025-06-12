@@ -1,36 +1,36 @@
 package com.wtu.exception;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
 /**
- * 业务异常类
- * 用于表示业务逻辑中的错误，会被全局异常处理器捕获并返回给前端
+ * 业务异常
  */
+@ResponseStatus(HttpStatus.BAD_REQUEST)
 public class BusinessException extends RuntimeException {
     
     private Integer code;
     
-    /**
-     * 默认构造函数，错误码为0
-     * @param message 错误信息
-     */
     public BusinessException(String message) {
         super(message);
-        this.code = 0;
+        this.code = 0; // 默认错误码
     }
     
-    /**
-     * 带错误码的构造函数
-     * @param message 错误信息
-     * @param code 错误码
-     */
     public BusinessException(String message, Integer code) {
         super(message);
         this.code = code;
     }
     
-    /**
-     * 获取错误码
-     * @return 错误码
-     */
+    public BusinessException(String message, Throwable cause) {
+        super(message, cause);
+        this.code = 0; // 默认错误码
+    }
+    
+    public BusinessException(String message, Integer code, Throwable cause) {
+        super(message, cause);
+        this.code = code;
+    }
+    
     public Integer getCode() {
         return code;
     }

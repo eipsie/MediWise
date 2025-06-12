@@ -17,10 +17,12 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -31,9 +33,29 @@ public class JwtSecurityFilter extends OncePerRequestFilter {
 
     private final JwtProperties jwtProperties;
     private final ObjectMapper objectMapper;
+    private final AntPathMatcher pathMatcher = new AntPathMatcher();
+    
+    // 定义不需要认证的公共路径
+    private final List<String> permitAllPaths = Arrays.asList(
+            "/api/auth/login",
+            "/api/auth/register",
+            "/doc.html",
+            "/swagger-ui/**",
+            "/v3/api-docs/**",
+            "/webjars/**"
+    );
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        // 检查是否是公开路径，如果是则直接放行
+        String requestPath = request.getRequestURI();
+        for (String permitPath : permitAllPaths) {
+            // 使用AntPathMatcher支持通配符路径匹配
+            if (pathMatcher.match(permitPath, requestPath)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+        }
 
         // 获取请求头中的Authorization字段
         String token = request.getHeader(jwtProperties.getTokenName());

@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.wtu.VO.common.PageVO;
 import com.wtu.VO.patient.PatientVO;
 import com.wtu.annotation.AdminOnly;
+import com.wtu.annotation.AdminOrDoctor;
 import com.wtu.annotation.DoctorOnly;
 import com.wtu.annotation.PatientCreatorOrAdmin;
 import com.wtu.dto.patient.PatientCreateDTO;
@@ -173,7 +174,7 @@ public class PatientController {
      * @return 患者信息
      */
     @GetMapping("/{id}")
-    @PatientCreatorOrAdmin
+    @AdminOrDoctor
     @Operation(summary = "查询患者", description = "根据ID查询患者详情")
     public Result<PatientVO> getPatientById(@Parameter(description = "患者ID") @PathVariable Long id) {
         Patient patient = patientService.getPatientById(id);
@@ -201,7 +202,7 @@ public class PatientController {
      * @return 患者信息
      */
     @GetMapping("/no/{patientNo}")
-    @PreAuthorize("hasAnyRole('DOCTOR', 'ADMIN')")
+    @AdminOrDoctor
     @Operation(summary = "根据编号查询", description = "根据患者编号查询患者详情")
     public Result<PatientVO> getPatientByPatientNo(@Parameter(description = "患者编号") @PathVariable String patientNo) {
         if (!StringUtils.hasText(patientNo)) {
@@ -233,7 +234,7 @@ public class PatientController {
      * @return 分页结果
      */
     @PostMapping("/page")
-    @PreAuthorize("hasAnyRole('DOCTOR', 'ADMIN')")
+    @AdminOrDoctor
     @Operation(summary = "分页查询", description = "分页查询患者列表，支持条件过滤")
     public Result<PageVO<PatientVO>> pagePatients(@RequestBody PatientQueryDTO queryDTO) {
         // 确保查询参数不为空
@@ -293,7 +294,7 @@ public class PatientController {
      * @return 分页结果
      */
     @GetMapping("/page")
-    @PreAuthorize("hasAnyRole('DOCTOR', 'ADMIN')")
+    @AdminOrDoctor
     @Operation(summary = "GET方式分页查询", description = "分页查询患者列表，支持条件过滤(兼容表单提交)")
     public Result<PageVO<PatientVO>> pagePatientsByGet(
             @Parameter(description = "当前页码") @RequestParam(defaultValue = "1") Integer current,

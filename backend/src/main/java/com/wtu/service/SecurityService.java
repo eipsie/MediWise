@@ -37,16 +37,16 @@ public class SecurityService {
             return false;
         }
         
-        // 查询当前用户 - 使用基本的LambdaQueryWrapper
-        Doctor currentDoctor = authMapper.selectById(creatorId);
-        if (currentDoctor == null) {
-            log.debug("创建者不存在: {}", creatorId);
+        // 查询当前用户ID
+        Long currentUserId = getCurrentUserId(username);
+        if (currentUserId == null) {
+            log.debug("当前用户不存在: {}", username);
             return false;
         }
         
-        // 检查用户名是否匹配
-        boolean isCreator = currentDoctor.getUsername().equals(username);
-        log.debug("用户[{}]是患者[{}]的创建者: {}", username, patientId, isCreator);
+        // 检查用户ID是否匹配创建者ID
+        boolean isCreator = currentUserId.equals(creatorId);
+        log.debug("用户[{}](ID:{})是患者[{}]的创建者(ID:{}): {}", username, currentUserId, patientId, creatorId, isCreator);
         return isCreator;
     }
     
