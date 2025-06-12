@@ -2,9 +2,11 @@ package com.wtu.handler;
 
 import com.wtu.exception.BusinessException;
 import com.wtu.exception.GlmApiException;
+import com.wtu.exception.ResourceNotFoundException;
 import com.wtu.result.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -38,6 +40,49 @@ public class GlobalExceptionHandler {
         if (e.getCode() != null && e.getCode() != 0) {
             result.setCode(e.getCode());
         }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
+    }
+    
+    /**
+     * 处理资源不存在异常
+     * @param e 资源不存在异常
+     * @return ResponseEntity 包装的 Result 对象
+     */
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<Result<Object>> handleResourceNotFoundException(ResourceNotFoundException e) {
+        logger.error("资源不存在异常: {}", e.getMessage());
+        Result<Object> result = Result.error(e.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(result);
+    }
+    
+    /**
+     * 处理数据完整性异常（如数据库约束违反）
+     * @param e 数据完整性异常
+     * @return ResponseEntity 包装的 Result 对象
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Result<Object>> handleDataIntegrityViolationException(DataIntegrityViolationException e) {
+        logger.error("数据完整性异常: {}", e.getMessage());
+        String message = e.getMessage();
+        
+        // 处理JSON格式错误
+        if (message.contains("Invalid JSON text")) {
+            message = "JSON格式错误：请确保JSON字段格式正确";
+        } 
+        // 处理唯一约束错误
+        else if (message.contains("Duplicate entry")) {
+            message = "数据已存在：请检查是否有重复数据";
+        }
+        // 处理外键约束错误
+        else if (message.contains("foreign key constraint")) {
+            message = "关联数据错误：请检查关联数据是否存在";
+        }
+        // 其他数据库错误
+        else {
+            message = "数据错误：" + message;
+        }
+        
+        Result<Object> result = Result.error(message);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
     }
     
