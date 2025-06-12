@@ -17,7 +17,8 @@ import com.wtu.mapper.DiagnosisRecordMapper;
 import com.wtu.mapper.DoctorMapper;
 import com.wtu.mapper.PatientMapper;
 import com.wtu.service.DiagnosisService;
-import com.wtu.service.GlmChatService;
+import com.wtu.service.GlmService;
+import com.wtu.dto.ai.GlmChatDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -39,7 +40,7 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisRecordMapper, Dia
 
     private final PatientMapper patientMapper;
     private final DoctorMapper doctorMapper;
-    private final GlmChatService glmChatService;
+    private final GlmService glmService;
 
     @Override
     @Transactional
@@ -149,10 +150,17 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisRecordMapper, Dia
         CompletableFuture.runAsync(() -> {
             try {
                 // 调用大模型服务
-                String response = glmChatService.chat(promptText);
+                GlmChatDTO chatDTO = new GlmChatDTO("glm-4", promptText);
+                String response = glmService.chat(chatDTO).getContent();
+                
+                // 将响应内容转换为JSON格式
+                com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                java.util.Map<String, String> responseMap = new java.util.HashMap<>();
+                responseMap.put("content", response);
+                String jsonResponse = objectMapper.writeValueAsString(responseMap);
                 
                 // 更新诊断记录
-                diagnosisRecord.setLlmResponseData(response);
+                diagnosisRecord.setLlmResponseData(jsonResponse);
                 diagnosisRecord.setStatus(DiagnosisStatus.PENDING);
                 diagnosisRecord.setUpdateTime(LocalDateTime.now());
                 updateById(diagnosisRecord);
@@ -247,7 +255,16 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisRecordMapper, Dia
         prompt.append("2. 建议的检查（需要进一步确认诊断的检查项目）\n");
         prompt.append("3. 治疗方案建议\n");
         
-        return prompt.toString();
+        // 将提示文本转换为JSON格式
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            java.util.Map<String, String> promptMap = new java.util.HashMap<>();
+            promptMap.put("prompt", prompt.toString());
+            return objectMapper.writeValueAsString(promptMap);
+        } catch (Exception e) {
+            log.error("转换提示文本为JSON格式失败", e);
+            return "{\"prompt\": \"转换失败\"}";
+        }
     }
 
     /**

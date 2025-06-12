@@ -54,9 +54,5 @@ knife4j:
 
 logging:
   level:
-    com:
-      wtu:
-        # 日志级别
-        mapper: debug
-        service: info
-        controller: info
+    com.wtu: DEBUG
+    org.springframework.security: DEBUG
