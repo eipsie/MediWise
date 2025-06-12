@@ -1,22 +1,5 @@
 <template>
-  <div class="ai-chat-page">
-    <!-- 头部导航 -->
-    <header class="navbar">
-      <div class="nav-brand" @click="goBackToHome">
-        <el-icon><back /></el-icon>
-        <span class="brand-text">返回首页</span>
-      </div>
-      <div class="chat-title">
-        <span>MediWise AI 智能问诊助手</span>
-      </div>
-      <div class="nav-actions">
-        <el-button type="primary" plain size="small" @click="clearChat">
-          <el-icon><delete /></el-icon>
-          <span>清空对话</span>
-        </el-button>
-      </div>
-    </header>
-
+  <div class="ai-chat-container">
     <!-- 聊天容器 -->
     <div class="chat-container" ref="chatContainer">
       <!-- 欢迎消息 -->
@@ -90,6 +73,12 @@
 
     <!-- 输入区域 -->
     <div class="input-area-wrapper">
+      <div class="actions">
+        <el-button type="primary" plain size="small" @click="clearChat">
+          <el-icon><delete /></el-icon>
+          <span>清空对话</span>
+        </el-button>
+      </div>
       <div class="input-area">
         <el-input
           v-model="userInput"
@@ -118,7 +107,6 @@ import { ref, onMounted, nextTick, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { 
-  ArrowLeft as Back, 
   Position, 
   Loading,
   Delete
@@ -128,13 +116,26 @@ import { getToken } from '../utils/jwt';
 import 'element-plus/es/components/message/style/css';
 import 'element-plus/es/components/message-box/style/css';
 import markdownit from 'markdown-it';
+import hljs from 'highlight.js';
+import 'highlight.js/styles/github.css';
 
 // 初始化markdown渲染器
 const md = markdownit({
   html: true,
   linkify: true,
   typographer: true,
-  breaks: true
+  breaks: true,
+  highlight: function (str, lang) {
+    // 添加代码高亮支持
+    if (lang && hljs.getLanguage(lang)) {
+      try {
+        return '<pre class="hljs"><code>' +
+               hljs.highlight(str, { language: lang, ignoreIllegals: true }).value +
+               '</code></pre>';
+      } catch (__) {}
+    }
+    return '<pre class="hljs"><code>' + md.utils.escapeHtml(str) + '</code></pre>';
+  }
 });
 
 // 路由实例
@@ -150,10 +151,15 @@ const chatContainer = ref(null);
 const renderContent = (text) => {
   if (!text) return '';
   
-  // 使用markdown渲染器直接处理文本
-  // 不再做自定义处理以避免干扰原始Markdown语法
   try {
-    return md.render(text);
+    // 预处理文本，特别处理有序列表
+    let processedText = text
+      // 确保列表项前有空行
+      .replace(/\n([-*+]|\d+\.)\s/g, '\n\n$1 ')
+      // 确保表格行之间有正确的换行
+      .replace(/\n\|\s*([^|]+)\s*\|/g, '\n| $1 |');
+      
+    return md.render(processedText);
   } catch (e) {
     console.error('Markdown渲染错误:', e);
     // 降级处理，保证至少显示文本
@@ -244,11 +250,6 @@ const handleEnterKey = (e) => {
   sendMessage();
 };
 
-// 返回主页
-const goBackToHome = () => {
-  router.push('/home');
-};
-
 // 清空对话
 const clearChat = async () => {
   try {
@@ -292,98 +293,46 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* 整个聊天页面 */
-.ai-chat-page {
+/* 整个聊天页面容器 */
+.ai-chat-container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  width: 100vw; /* 确保撑满整个视口宽度 */
-  background-color: #f7f8fa;
-  overflow: hidden; /* 防止整体滚动 */
-  position: fixed; /* 固定位置 */
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  max-width: 100%; /* 确保不超过视口宽度 */
-}
-
-/* 头部导航 */
-.navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 30px; /* 与消息区域保持一致 */
-  background-color: #fff;
-  border-bottom: 1px solid #ebeef5;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  width: 100%; /* 撑满宽度 */
-  box-sizing: border-box; /* 确保padding不会增加总宽度 */
-}
-
-.nav-brand {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  color: #409eff;
-  flex: 0 0 auto; /* 不伸缩 */
-  margin-right: 10px; /* 添加右侧间距 */
-}
-
-.chat-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #303133;
-  flex: 1; /* 占据中间空间 */
-  text-align: center; /* 标题居中 */
-  white-space: nowrap; /* 防止标题换行 */
-  overflow: hidden; /* 超出部分隐藏 */
-  text-overflow: ellipsis; /* 添加省略号 */
-}
-
-.nav-actions {
-  flex: 0 0 auto; /* 不伸缩 */
-  white-space: nowrap; /* 防止按钮文字换行 */
-  margin-left: 10px; /* 添加左侧间距 */
-}
-
-.nav-actions .el-button {
-  display: flex;
-  align-items: center;
-  gap: 5px;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  max-width: 100%;
 }
 
 /* 聊天容器 */
 .chat-container {
   flex: 1;
   overflow-y: auto;
-  overflow-x: hidden; /* 防止水平滚动 */
-  padding: 20px 0; /* 移除左右内边距，改由子元素控制 */
+  overflow-x: hidden;
+  padding: 20px 0;
   display: flex;
   flex-direction: column;
   gap: 16px;
   scroll-behavior: smooth;
-  width: 100%; /* 确保撑满整个宽度 */
-  box-sizing: border-box; /* 确保padding不增加总宽度 */
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .messages-wrapper {
   display: flex;
   flex-direction: column;
   width: 100%;
-  padding: 0 30px; /* 增加左右内边距 */
-  box-sizing: border-box; /* 确保padding不增加总宽度 */
-  max-width: 100%; /* 确保不超过父容器宽度 */
+  padding: 0 20px;
+  box-sizing: border-box;
+  max-width: 100%;
 }
 
 /* 欢迎消息容器 */
 .welcome-container {
   width: 100%;
   display: flex;
-  justify-content: stretch; /* 改为拉伸以填满宽度 */
-  padding: 0 30px; /* 与消息区域保持一致 */
-  box-sizing: border-box; /* 确保padding不增加总宽度 */
+  justify-content: stretch;
+  padding: 0 20px;
+  box-sizing: border-box;
 }
 
 .welcome-message {
@@ -464,7 +413,7 @@ onMounted(() => {
   margin-bottom: 22px;
   width: 100%;
   animation: messageSlide 0.3s ease-out;
-  box-sizing: border-box; /* 确保不超出容器 */
+  box-sizing: border-box;
 }
 
 @keyframes messageSlide {
@@ -473,45 +422,45 @@ onMounted(() => {
 }
 
 .user-message {
-  justify-content: flex-end; /* 用户消息靠右 */
+  justify-content: flex-end;
 }
 
 .ai-message {
-  justify-content: flex-start; /* AI消息靠左 */
-  width: 100%; /* 确保AI消息撑开整个容器 */
+  justify-content: flex-start;
+  width: 100%;
 }
 
 .message-avatar {
-  flex-shrink: 0; /* 防止头像被压缩 */
+  flex-shrink: 0;
 }
 
 .user-message .message-content {
   margin-right: 14px;
   max-width: 70%; 
-  min-width: 150px; /* 减小最小宽度 */
+  min-width: 150px;
   display: flex;
   flex-direction: column;
-  align-items: flex-end; /* 右对齐 */
+  align-items: flex-end;
 }
 
 .ai-message .message-content {
   margin-left: 14px;
-  max-width: 70%;
-  min-width: 150px; /* 减小最小宽度 */
+  max-width: 90%;
+  min-width: 150px;
   display: flex;
   flex-direction: column;
-  align-items: flex-start; /* 左对齐 */
+  align-items: flex-start;
 }
 
 .message-text {
-  padding: 14px 18px;
+  padding: 16px 20px;
   border-radius: 12px;
   line-height: 1.6;
   word-break: break-word;
   text-align: left;
-  width: fit-content; /* 根据内容调整宽度 */
-  max-width: 100%; /* 但不超过父容器 */
-  overflow-wrap: break-word; /* 确保长单词可以换行 */
+  width: fit-content;
+  max-width: 100%;
+  overflow-wrap: break-word;
 }
 
 .user-message .message-text {
@@ -525,16 +474,17 @@ onMounted(() => {
   color: #333;
   border-top-left-radius: 0;
   box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  padding: 20px 24px; /* 增加AI消息的内边距 */
 }
 
 /* Markdown内容样式 */
 .markdown-body {
   font-size: 15px;
   text-align: left;
-  min-width: 150px; /* 减小最小宽度 */
-  max-width: 100%; /* 确保不超过父容器 */
-  overflow-wrap: break-word; /* 确保长单词可以换行 */
-  word-break: break-word; /* 打破长单词 */
+  min-width: 150px;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .markdown-body h1, 
@@ -572,18 +522,14 @@ onMounted(() => {
 /* 改进Markdown列表样式 */
 .markdown-body ul,
 .markdown-body ol {
-  padding-left: 20px;
-  margin-top: 8px;
-  margin-bottom: 8px;
+  padding-left: 1.5em;
+  margin: 12px 0;
   list-style-position: outside;
+  box-sizing: border-box;
 }
 
 .markdown-body ul {
   list-style-type: disc;
-}
-
-.markdown-body ul ul {
-  list-style-type: circle;
 }
 
 .markdown-body ol {
@@ -591,8 +537,9 @@ onMounted(() => {
 }
 
 .markdown-body li {
-  margin-bottom: 6px;
+  margin: 8px 0;
   line-height: 1.6;
+  position: relative;
 }
 
 .markdown-body li > p {
@@ -600,8 +547,11 @@ onMounted(() => {
   margin-bottom: 0;
 }
 
-.markdown-body li + li {
-  margin-top: 4px;
+/* 确保列表项内容不会溢出 */
+.markdown-body li {
+  padding-right: 4px;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .markdown-body strong {
@@ -652,8 +602,8 @@ onMounted(() => {
   border-top-left-radius: 0;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
   animation: pulse 1.5s infinite;
-  min-width: 150px; /* 减小最小宽度 */
-  max-width: calc(70% - 14px); /* 与消息内容宽度保持一致 */
+  min-width: 150px;
+  max-width: calc(70% - 14px);
 }
 
 @keyframes pulse {
@@ -664,14 +614,17 @@ onMounted(() => {
 
 /* 输入区域 */
 .input-area-wrapper {
-  width: 100%;
-  display: flex;
-  justify-content: center;
   background-color: #fff;
   border-top: 1px solid #ebeef5;
   box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
-  padding: 18px 30px; /* 增加左右内边距 */
-  box-sizing: border-box; /* 确保padding不增加总宽度 */
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
 }
 
 .input-area {
@@ -679,12 +632,12 @@ onMounted(() => {
   align-items: flex-end;
   gap: 12px;
   width: 100%;
-  max-width: 100%; /* 确保不超过父容器宽度 */
+  max-width: 100%;
 }
 
 .input-area .el-textarea {
   flex: 1;
-  width: 100%; /* 确保输入框占据可用空间 */
+  width: 100%;
 }
 
 .input-area .el-textarea__inner {
@@ -700,15 +653,15 @@ onMounted(() => {
 }
 
 .input-area .el-button {
-  flex-shrink: 0; /* 防止按钮被压缩 */
-  white-space: nowrap; /* 防止文字换行 */
+  flex-shrink: 0;
+  white-space: nowrap;
   height: 44px;
   padding: 0 24px;
   border-radius: 22px;
   font-weight: 500;
   box-shadow: 0 2px 6px rgba(64, 158, 255, 0.3);
   transition: all 0.3s;
-  min-width: 90px; /* 确保按钮有足够宽度 */
+  min-width: 90px;
 }
 
 .input-area .el-button:hover:not([disabled]) {
@@ -723,11 +676,9 @@ onMounted(() => {
   }
 
   .messages-wrapper, 
-  .welcome-container,
-  .input-area-wrapper,
-  .navbar {
-    padding-left: 15px;
-    padding-right: 15px;
+  .welcome-container {
+    padding-left: 10px;
+    padding-right: 10px;
   }
 
   .message {
@@ -747,32 +698,8 @@ onMounted(() => {
     padding: 12px 16px;
   }
   
-  /* 导航栏响应式调整 */
-  .navbar {
-    padding-left: 15px;
-    padding-right: 15px;
-  }
-  
-  .nav-brand .brand-text {
-    display: none; /* 小屏幕隐藏返回首页文字 */
-  }
-  
-  .chat-title {
-    font-size: 14px;
-    margin: 0 5px; /* 减小标题两侧边距 */
-  }
-  
-  .nav-actions {
-    margin-left: 5px; /* 减小左侧边距 */
-  }
-  
-  .nav-actions .el-button {
-    padding: 6px 8px;
-    font-size: 12px;
-  }
-  
   .input-area {
-    gap: 8px; /* 减小间距 */
+    gap: 8px;
   }
   
   .input-area .el-button {
@@ -787,11 +714,9 @@ onMounted(() => {
   }
   
   .messages-wrapper, 
-  .welcome-container,
-  .input-area-wrapper,
-  .navbar {
-    padding-left: 10px;
-    padding-right: 10px;
+  .welcome-container {
+    padding-left: 5px;
+    padding-right: 5px;
   }
   
   .user-message .message-content,
@@ -812,15 +737,6 @@ onMounted(() => {
     min-width: 100px;
   }
   
-  /* 超小屏幕隐藏按钮文字，只显示图标 */
-  .nav-actions .el-button span {
-    display: none;
-  }
-  
-  .nav-actions .el-button {
-    padding: 6px;
-  }
-  
   .input-area .el-button {
     padding: 0 12px;
     min-width: 50px;
@@ -836,7 +752,7 @@ onMounted(() => {
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
-/* 全局确保不会横向滚动 */
+/* 确保不会横向滚动 */
 * {
   box-sizing: border-box;
 }
@@ -845,18 +761,72 @@ onMounted(() => {
 .markdown-body pre {
   overflow-x: auto;
   max-width: 100%;
+  margin: 12px 0;
+  border-radius: 8px;
+  background-color: #f6f8fa;
+  padding: 12px;
 }
 
 .markdown-body code {
   white-space: pre-wrap;
   word-break: break-word;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 14px;
+  background-color: rgba(175, 184, 193, 0.2);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  margin: 0 0.2em;
 }
 
-/* 修复表格可能导致的横向滚动 */
-.markdown-body table {
+.markdown-body pre code {
+  background-color: transparent;
+  padding: 0;
+  margin: 0;
+  border-radius: 0;
   display: block;
   overflow-x: auto;
-  max-width: 100%;
+  line-height: 1.6;
+}
+
+/* 表格样式 */
+.markdown-body table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 16px 0;
+  display: block;
+  overflow-x: auto;
+}
+
+.markdown-body table th,
+.markdown-body table td {
+  padding: 8px 12px;
+  border: 1px solid #dfe2e5;
+  text-align: left;
+}
+
+.markdown-body table th {
+  background-color: #f6f8fa;
+  font-weight: 600;
+}
+
+.markdown-body table tr:nth-child(2n) {
+  background-color: #f8f8f8;
+}
+
+/* 引用块样式 */
+.markdown-body blockquote {
+  margin: 16px 0;
+  padding: 0 16px;
+  color: #6a737d;
+  border-left: 4px solid #dfe2e5;
+}
+
+.markdown-body blockquote > :first-child {
+  margin-top: 0;
+}
+
+.markdown-body blockquote > :last-child {
+  margin-bottom: 0;
 }
 
 /* 确保输入按钮始终显示正常 */
@@ -875,5 +845,12 @@ onMounted(() => {
   .input-area .el-button .el-icon {
     margin-right: 0;
   }
+}
+
+/* 列表项包装器样式 */
+.list-item-wrapper {
+  margin: 8px 0;
+  padding-left: 8px;
+  display: block;
 }
 </style> 

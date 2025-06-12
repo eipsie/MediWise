@@ -47,8 +47,16 @@ const handleLogin = async () => {
           
           ElMessage.success('登录成功')
       
-          // 跳转到首页
-          await router.push('/home')
+          // 解析token获取用户角色
+          const decoded = jwtDecode(token)
+          const userRole = decoded.role
+          
+          // 根据角色重定向到不同的首页
+          if (userRole === 'ADMIN') {
+            await router.push('/admin-dashboard')
+          } else {
+            await router.push('/dashboard')
+          }
         } else {
           ElMessage.error(res.data.msg || '登录失败')
         }
