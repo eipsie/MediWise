@@ -2,8 +2,8 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { login } from '../api/auth'
-import { setToken } from '../utils/jwt'
+import { login } from '../../api/auth'
+import { setToken } from '../../utils/jwt'
 import { jwtDecode } from 'jwt-decode'
 
 // 获取路由实例

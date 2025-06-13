@@ -2,7 +2,7 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { register } from '../api/auth'
+import { register } from '../../api/auth'
 
 // 获取路由实例
 const router = useRouter()

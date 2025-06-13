@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Login from '../views/Login.vue'
-import Register from '../views/Register.vue'
-import AiChat from '../views/AiChat.vue'
+import Login from '../views/auth/Login.vue'
+import Register from '../views/auth/Register.vue'
+import AiChat from '../views/ai/AiChat.vue'
 import { getToken, getUserRole, isTokenExpired } from '../utils/jwt'
 import { ElMessage } from 'element-plus'
 import MainLayout from '../components/layout/MainLayout.vue'
@@ -33,7 +33,7 @@ const routes = [
       {
         path: '/dashboard',
         name: 'Dashboard',
-        component: () => import('../views/Dashboard.vue'),
+        component: () => import('../views/user/Dashboard.vue'),
         meta: { 
           title: '医生工作台', 
           requiresAuth: true,
@@ -271,7 +271,7 @@ const routes = [
   {
     path: '/403',
     name: '403',
-    component: () => import('../views/403.vue'),
+    component: () => import('../views/coomon/403.vue'),
     meta: {
       title: '权限不足',
     }
@@ -279,7 +279,7 @@ const routes = [
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
-    component: () => import('../views/NotFound.vue'),
+    component: () => import('../views/coomon/NotFound.vue'),
     meta: {
       title: '页面不存在',
     }

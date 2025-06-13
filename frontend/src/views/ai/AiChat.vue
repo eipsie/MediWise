@@ -6,7 +6,7 @@
       <div class="welcome-container" v-if="chatHistory.length === 0">
         <div class="welcome-message">
           <div class="welcome-title">
-            <img src="../asset/glm_logo.png" alt="GLM Logo" class="ai-avatar">
+            <img src="../../asset/glm_logo.png" alt="GLM Logo" class="ai-avatar">
             <h2>MediWise AI 助手</h2>
           </div>
           <p>我是基于GLM大模型的智能医疗助手，可以回答医疗相关问题、提供健康建议和医学知识咨询。请注意我的回答仅供参考，具体诊断和治疗请以专业医生建议为准。</p>
@@ -42,14 +42,14 @@
               <div class="message-time">{{ msg.time }}</div>
             </div>
             <div class="message-avatar">
-              <img src="../asset/glm_logo.png" alt="User Avatar">
+              <img src="../../asset/glm_logo.png" alt="User Avatar">
             </div>
           </template>
           
           <!-- AI消息 -->
           <template v-else>
             <div class="message-avatar">
-              <img src="../asset/glm_logo.png" alt="AI Avatar">
+              <img src="../../asset/glm_logo.png" alt="AI Avatar">
             </div>
             <div class="message-content">
               <div class="message-text markdown-body" v-html="renderContent(msg.content)"></div>
@@ -62,7 +62,7 @@
       <!-- 加载指示器 -->
       <div class="loading-message" v-if="loading">
         <div class="message-avatar">
-          <img src="../asset/glm_logo.png" alt="AI Avatar">
+          <img src="../../asset/glm_logo.png" alt="AI Avatar">
         </div>
         <div class="loading-indicator">
           <el-icon class="is-loading"><loading /></el-icon>
@@ -111,8 +111,8 @@ import {
   Loading,
   Delete
 } from '@element-plus/icons-vue';
-import { chatWithGlm } from '../api/glm';
-import { getToken } from '../utils/jwt';
+import { chatWithGlm } from '../../api/glm';
+import { getToken } from '../../utils/jwt';
 import 'element-plus/es/components/message/style/css';
 import 'element-plus/es/components/message-box/style/css';
 import markdownit from 'markdown-it';

@@ -1,12 +1,12 @@
 <template>
-  <div class="forbidden-page">
+  <div class="notfound-page">
     <div class="error-container">
       <div class="error-icon">
-        <el-icon class="lock-icon"><Lock /></el-icon>
+        <el-icon class="notfound-icon"><WarningFilled /></el-icon>
       </div>
-      <div class="error-code">403</div>
-      <div class="error-title">访问被拒绝</div>
-      <div class="error-message">抱歉，您没有权限访问此页面</div>
+      <div class="error-code">404</div>
+      <div class="error-title">页面不存在</div>
+      <div class="error-message">您访问的页面不存在或已被删除</div>
       <el-button type="primary" class="back-btn" @click="goBack">返回首页</el-button>
     </div>
   </div>
@@ -14,17 +14,22 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
-import { Lock } from '@element-plus/icons-vue'
+import { WarningFilled } from '@element-plus/icons-vue'
+import { getUserRole } from '../../utils/jwt'
 
 const router = useRouter()
-
 const goBack = () => {
-  router.push('/home')
+  const role = getUserRole()
+  if (role === 'ADMIN') {
+    router.push('/admin-dashboard')
+  } else {
+    router.push('/dashboard')
+  }
 }
 </script>
 
 <style scoped>
-.forbidden-page {
+.notfound-page {
   height: 100vh;
   width: 100vw;
   display: flex;
@@ -62,10 +67,10 @@ const goBack = () => {
   margin-bottom: 20px;
 }
 
-.lock-icon {
+.notfound-icon {
   font-size: 50px;
-  color: #f56c6c;
-  background-color: #fef0f0;
+  color: #e6a23c;
+  background-color: #fdf6ec;
   padding: 20px;
   border-radius: 50%;
 }
@@ -73,7 +78,7 @@ const goBack = () => {
 .error-code {
   font-size: 120px;
   font-weight: bold;
-  color: #f56c6c;
+  color: #e6a23c;
   margin-bottom: 10px;
   line-height: 1.2;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
@@ -104,4 +109,4 @@ const goBack = () => {
   transform: translateY(-2px);
   box-shadow: 0 4px 16px rgba(64, 158, 255, 0.4);
 }
-</style>
+</style> 
