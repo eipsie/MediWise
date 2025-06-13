@@ -271,7 +271,7 @@ const routes = [
   {
     path: '/403',
     name: '403',
-    component: () => import('../views/coomon/403.vue'),
+    component: () => import('../views/common/403.vue'),
     meta: {
       title: '权限不足',
     }
@@ -279,7 +279,7 @@ const routes = [
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
-    component: () => import('../views/coomon/NotFound.vue'),
+    component: () => import('../views/common/NotFound.vue'),
     meta: {
       title: '页面不存在',
     }
