@@ -11,14 +11,7 @@ const routes = [
   {
     path: '/',
     name: 'Root',
-    redirect: to => {
-      const role = getUserRole()
-      if (role === 'ADMIN') {
-        return '/admin-dashboard'
-      } else {
-        return '/dashboard'
-      }
-    }
+    redirect: '/login'
   },
   {
     path: '/login',
