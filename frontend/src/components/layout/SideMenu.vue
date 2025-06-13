@@ -13,15 +13,15 @@
       <!-- 医生可见菜单 -->
       <template v-if="isDoctorRole">
         <el-menu-item index="/dashboard">
-          <el-icon><HomeFilled /></el-icon>
+        <el-icon><HomeFilled /></el-icon>
           <template #title>医生工作台</template>
-        </el-menu-item>
-        
-        <el-sub-menu index="/patients">
-          <template #title>
-            <el-icon><User /></el-icon>
-            <span>患者管理</span>
-          </template>
+      </el-menu-item>
+      
+      <el-sub-menu index="/patients">
+        <template #title>
+          <el-icon><User /></el-icon>
+          <span>患者管理</span>
+        </template>
           <el-menu-item index="/patients/list">
             <el-icon><List /></el-icon>
             <span>患者列表</span>
@@ -30,13 +30,13 @@
             <el-icon><Plus /></el-icon>
             <span>新增患者</span>
           </el-menu-item>
-        </el-sub-menu>
-        
-        <el-sub-menu index="/diagnoses">
-          <template #title>
-            <el-icon><Stethoscope /></el-icon>
-            <span>诊断管理</span>
-          </template>
+      </el-sub-menu>
+      
+      <el-sub-menu index="/diagnoses">
+        <template #title>
+          <el-icon><Stethoscope /></el-icon>
+          <span>诊断管理</span>
+        </template>
           <el-menu-item index="/diagnoses/list">
             <el-icon><Document /></el-icon>
             <span>诊断列表</span>
@@ -45,13 +45,13 @@
             <el-icon><Plus /></el-icon>
             <span>新增诊断</span>
           </el-menu-item>
-        </el-sub-menu>
-        
-        <el-sub-menu index="/bloodtests">
-          <template #title>
-            <el-icon><FirstAidKit /></el-icon>
-            <span>血常规检查</span>
-          </template>
+      </el-sub-menu>
+      
+      <el-sub-menu index="/bloodtests">
+        <template #title>
+          <el-icon><FirstAidKit /></el-icon>
+          <span>血常规检查</span>
+        </template>
           <el-menu-item index="/bloodtests/list">
             <el-icon><Files /></el-icon>
             <span>检查列表</span>
@@ -107,7 +107,7 @@
             <el-icon><DocumentAdd /></el-icon>
             <span>添加知识</span>
           </el-menu-item>
-        </el-sub-menu>
+      </el-sub-menu>
       </template>
       
       <!-- 医生和管理员都可见的菜单 -->

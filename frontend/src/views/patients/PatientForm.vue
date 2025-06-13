@@ -2,13 +2,13 @@
   <div class="patient-form">
     <h2>新增患者</h2>
     <p>这是新增患者页面，内容待开发</p>
-    
+
     <el-card class="coming-soon-card">
       <div class="coming-soon">
         <el-icon class="coming-soon-icon"><Edit /></el-icon>
         <h3>功能开发中</h3>
         <p>患者信息表单功能正在开发中，敬请期待！</p>
-      </div>
+        </div>
     </el-card>
   </div>
 </template>

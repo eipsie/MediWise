@@ -2,6 +2,7 @@ package com.wtu.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.wtu.VO.knowledge.MedicalKnowledgeVO;
+import com.wtu.annotation.AdminOnly;
 import com.wtu.annotation.DoctorOnly;
 import com.wtu.dto.knowledge.CreateMedicalKnowledgeDTO;
 import com.wtu.dto.knowledge.UpdateMedicalKnowledgeDTO;
@@ -28,7 +29,7 @@ public class MedicalKnowledgeController {
 
     @PostMapping
     @Operation(summary = "创建医学知识条目", description = "创建新的医学知识条目")
-    @DoctorOnly
+    @AdminOnly
     public Result<MedicalKnowledgeVO> createKnowledge(@RequestBody @Valid CreateMedicalKnowledgeDTO createDTO) {
         MedicalKnowledgeVO result = medicalKnowledgeService.createKnowledge(createDTO);
         return Result.success(result);
@@ -45,7 +46,7 @@ public class MedicalKnowledgeController {
 
     @PutMapping("/{id}")
     @Operation(summary = "更新医学知识条目", description = "更新医学知识条目信息")
-    @DoctorOnly
+    @AdminOnly
     public Result<MedicalKnowledgeVO> updateKnowledge(
             @Parameter(description = "医学知识ID") @PathVariable Long id,
             @RequestBody @Valid UpdateMedicalKnowledgeDTO updateDTO) {
@@ -55,7 +56,7 @@ public class MedicalKnowledgeController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除医学知识条目", description = "删除医学知识条目")
-    @DoctorOnly
+    @AdminOnly
     public Result<Boolean> deleteKnowledge(
             @Parameter(description = "医学知识ID") @PathVariable Long id) {
         boolean result = medicalKnowledgeService.deleteKnowledge(id);
