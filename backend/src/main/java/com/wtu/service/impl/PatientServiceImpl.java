@@ -4,6 +4,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.wtu.entity.Patient;
+import com.wtu.exception.BusinessException;
+import com.wtu.exception.PatientValidationException;
+import com.wtu.exception.ResourceNotFoundException;
 import com.wtu.mapper.PatientMapper;
 import com.wtu.service.PatientService;
 import com.wtu.utils.PatientNoGenerator;
@@ -32,11 +35,9 @@ public class PatientServiceImpl implements PatientService {
 
     @Override
     @Transactional
-    public boolean createPatient(Patient patient) {
-        // 1. 数据验证
-        if (!validatePatient(patient)) {
-            return false;
-        }
+    public Patient createPatient(Patient patient) {
+        // 1. 数据验证 - 现在会抛出异常而不是返回false
+        validatePatient(patient);
         
         // 2. 生成患者编号
         patient.setPatientNo(PatientNoGenerator.generatePatientNo());
@@ -49,23 +50,24 @@ public class PatientServiceImpl implements PatientService {
         // 4. 插入数据库
         int rows = patientMapper.insert(patient);
         
+        if (rows <= 0) {
+            throw new BusinessException("创建患者记录失败");
+        }
+        
         log.info("创建患者成功: {}", patient.getPatientNo());
-        return rows > 0;
+        return patient;  // 返回创建的患者对象，包含ID
     }
 
     @Override
     @Transactional
-    public boolean updatePatient(Patient patient) {
+    public Patient updatePatient(Patient patient) {
         // 1. 数据验证
-        if (!validatePatient(patient)) {
-            return false;
-        }
+        validatePatient(patient);
         
         // 2. 查询患者是否存在
         Patient existingPatient = patientMapper.selectById(patient.getId());
         if (existingPatient == null) {
-            log.error("更新患者失败: 患者ID不存在 {}", patient.getId());
-            return false;
+            throw new ResourceNotFoundException("患者不存在，ID: " + patient.getId());
         }
         
         // 3. 设置不能修改的字段
@@ -79,36 +81,46 @@ public class PatientServiceImpl implements PatientService {
         // 5. 更新数据库
         int rows = patientMapper.updateById(patient);
         
+        if (rows <= 0) {
+            throw new BusinessException("更新患者记录失败");
+        }
+        
         log.info("更新患者成功: {}", patient.getPatientNo());
-        return rows > 0;
+        return patient;  // 返回更新后的患者对象
     }
 
     @Override
     @Transactional
-    public boolean deletePatient(Long id) {
+    public void deletePatient(Long id) {
         // 1. 查询患者是否存在
         Patient patient = patientMapper.selectById(id);
         if (patient == null) {
-            log.error("删除患者失败: 患者ID不存在 {}", id);
-            return false;
+            throw new ResourceNotFoundException("患者不存在，ID: " + id);
         }
         
         // 2. 删除患者
         int rows = patientMapper.deleteById(id);
         
+        if (rows <= 0) {
+            throw new BusinessException("删除患者记录失败");
+        }
+        
         log.info("删除患者成功: {}", patient.getPatientNo());
-        return rows > 0;
     }
 
     @Override
     public Patient getPatientById(Long id) {
-        return patientMapper.selectById(id);
+        Patient patient = patientMapper.selectById(id);
+        if (patient == null) {
+            throw new ResourceNotFoundException("患者不存在，ID: " + id);
+        }
+        return patient;
     }
 
     @Override
     public Patient getPatientByPatientNo(String patientNo) {
         if (!StringUtils.hasText(patientNo)) {
-            return null;
+            throw new PatientValidationException("患者编号不能为空");
         }
         
         LambdaQueryWrapper<Patient> queryWrapper = new LambdaQueryWrapper<>();
@@ -135,7 +147,7 @@ public class PatientServiceImpl implements PatientService {
     @Override
     public List<Patient> getPatientsByDoctorId(Long doctorId) {
         if (doctorId == null) {
-            return null;
+            throw new PatientValidationException("医生ID不能为空");
         }
         
         LambdaQueryWrapper<Patient> queryWrapper = new LambdaQueryWrapper<>();
@@ -148,33 +160,27 @@ public class PatientServiceImpl implements PatientService {
     /**
      * 验证患者数据的有效性
      * @param patient 患者对象
-     * @return 是否有效
+     * @throws PatientValidationException 如果验证失败
      */
-    private boolean validatePatient(Patient patient) {
+    private void validatePatient(Patient patient) {
         // 检查基本字段
         if (patient == null || !StringUtils.hasText(patient.getName())) {
-            log.error("患者姓名不能为空");
-            return false;
+            throw new PatientValidationException("患者姓名不能为空");
         }
         
         // 检查性别取值范围
         if (patient.getGender() == null || patient.getGender() < 0 || patient.getGender() > 2) {
-            log.error("患者性别取值无效");
-            return false;
+            throw new PatientValidationException("患者性别取值无效");
         }
         
         // 验证手机号格式（如果有）
         if (StringUtils.hasText(patient.getPhone()) && !PHONE_PATTERN.matcher(patient.getPhone()).matches()) {
-            log.error("手机号格式不正确: {}", patient.getPhone());
-            return false;
+            throw new PatientValidationException("手机号格式不正确: " + patient.getPhone());
         }
         
         // 验证身份证号格式（如果有）
         if (StringUtils.hasText(patient.getIdCard()) && !ID_CARD_PATTERN.matcher(patient.getIdCard()).matches()) {
-            log.error("身份证号格式不正确: {}", patient.getIdCard());
-            return false;
+            throw new PatientValidationException("身份证号格式不正确: " + patient.getIdCard());
         }
-        
-        return true;
     }
 } 

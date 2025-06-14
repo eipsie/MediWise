@@ -2,6 +2,7 @@ package com.wtu.handler;
 
 import com.wtu.exception.BusinessException;
 import com.wtu.exception.GlmApiException;
+import com.wtu.exception.PatientValidationException;
 import com.wtu.exception.ResourceNotFoundException;
 import com.wtu.result.Result;
 import org.slf4j.Logger;
@@ -155,6 +156,22 @@ public class GlobalExceptionHandler {
         logger.warn("权限不足 (AccessDeniedException): {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(Result.error("权限不足，无法执行此操作"));
+    }
+
+    /**
+     * 处理患者数据验证异常
+     * @param e 患者数据验证异常
+     * @return ResponseEntity 包装的 Result 对象
+     */
+    @ExceptionHandler(PatientValidationException.class)
+    public ResponseEntity<Result<Object>> handlePatientValidationException(PatientValidationException e) {
+        logger.error("患者数据验证异常: {}", e.getMessage());
+        Result<Object> result = Result.error(e.getMessage());
+        // 如果患者验证异常的code不是0，则设置为自定义code
+        if (e.getCode() != null && e.getCode() != 0) {
+            result.setCode(e.getCode());
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
     }
 
     /**

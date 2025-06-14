@@ -56,37 +56,29 @@ public class PatientController {
     @DoctorOnly
     @Operation(summary = "创建患者", description = "创建新的患者记录")
     public Result<PatientVO> createPatient(@RequestBody PatientCreateDTO dto) {
-        // 验证参数
+        // 参数校验
         if (dto == null) {
-            return Result.error("请求参数不能为空");
+            return Result.error("请求数据不能为空");
         }
         
-        // 验证必填字段
-        if (!StringUtils.hasText(dto.getName())) {
-            return Result.error("患者姓名不能为空");
-        }
-        
-        // 获取当前登录医生
+        // 获取当前登录的医生ID作为创建者
         Doctor currentDoctor = getCurrentDoctor();
         if (currentDoctor == null) {
             return Result.error("未获取到当前登录用户信息");
         }
         
-        // 创建患者记录
+        // 转换为实体
         Patient patient = PatientConverter.createDto2Entity(dto);
-        patient.setCreatorId(currentDoctor.getId());
+        patient.setCreatorId(currentDoctor.getId()); // 设置创建者ID
         
-        // 调用服务保存
-        boolean success = patientService.createPatient(patient);
-        if (success) {
-            // 转换为VO并返回
-            PatientVO vo = PatientConverter.entity2VO(patient);
-            vo.setCreatorName(currentDoctor.getRealName() != null ? 
-                    currentDoctor.getRealName() : currentDoctor.getUsername());
-            return Result.success(vo);
-        } else {
-            return Result.error("创建失败");
-        }
+        // 保存患者信息
+        Patient savedPatient = patientService.createPatient(patient);
+        
+        // 转换为VO返回
+        PatientVO vo = PatientConverter.entity2VO(savedPatient);
+        vo.setCreatorName(currentDoctor.getRealName() != null ? currentDoctor.getRealName() : currentDoctor.getUsername());
+        
+        return Result.success(vo);
     }
     
     /**
@@ -101,47 +93,31 @@ public class PatientController {
     public Result<PatientVO> updatePatient(
             @Parameter(description = "患者ID") @PathVariable Long id, 
             @RequestBody PatientUpdateDTO dto) {
-        // 验证参数
+        // 参数校验
         if (dto == null) {
-            return Result.error("请求参数不能为空");
+            return Result.error("请求数据不能为空");
         }
+        dto.setId(id); // 确保ID与路径参数一致
         
-        // 检查患者是否存在
-        Patient existingPatient = patientService.getPatientById(id);
-        if (existingPatient == null) {
-            return Result.error("患者不存在");
-        }
-        
-        // 获取当前登录医生
-        Doctor currentDoctor = getCurrentDoctor();
-        if (currentDoctor == null) {
-            return Result.error("未获取到当前登录用户信息");
-        }
-        
-        // 转换为实体并设置ID
+        // 转换为实体
         Patient patient = PatientConverter.updateDto2Entity(dto);
-        patient.setId(id);
         
         // 调用服务更新
-        boolean success = patientService.updatePatient(patient);
-        if (success) {
-            // 重新查询最新数据
-            Patient updatedPatient = patientService.getPatientById(id);
-            // 转换为VO并返回
-            PatientVO vo = PatientConverter.entity2VO(updatedPatient);
-            
-            // 获取创建者信息
-            if (vo.getCreatorId() != null) {
-                Doctor doctor = getDoctor(vo.getCreatorId());
-                if (doctor != null) {
-                    vo.setCreatorName(doctor.getRealName() != null ? doctor.getRealName() : doctor.getUsername());
-                }
-            }
-            
-            return Result.success(vo);
-        } else {
-            return Result.error("更新失败");
+        Patient updatedPatient = patientService.updatePatient(patient);
+        
+        // 获取创建者信息
+        Doctor creator = null;
+        if (updatedPatient.getCreatorId() != null) {
+            creator = getDoctor(updatedPatient.getCreatorId());
         }
+        
+        // 转换为VO返回
+        PatientVO vo = PatientConverter.entity2VO(updatedPatient);
+        if (creator != null) {
+            vo.setCreatorName(creator.getRealName() != null ? creator.getRealName() : creator.getUsername());
+        }
+        
+        return Result.success(vo);
     }
     
     /**
@@ -153,19 +129,9 @@ public class PatientController {
     @PatientCreatorOrAdmin
     @Operation(summary = "删除患者", description = "删除指定ID的患者")
     public Result<Void> deletePatient(@Parameter(description = "患者ID") @PathVariable Long id) {
-        // 检查患者是否存在
-        Patient existingPatient = patientService.getPatientById(id);
-        if (existingPatient == null) {
-            return Result.error("患者不存在");
-        }
-        
         // 调用服务删除
-        boolean success = patientService.deletePatient(id);
-        if (success) {
-            return Result.success();
-        } else {
-            return Result.error("删除失败");
-        }
+        patientService.deletePatient(id);
+        return Result.success();
     }
     
     /**
@@ -178,22 +144,19 @@ public class PatientController {
     @Operation(summary = "查询患者", description = "根据ID查询患者详情")
     public Result<PatientVO> getPatientById(@Parameter(description = "患者ID") @PathVariable Long id) {
         Patient patient = patientService.getPatientById(id);
-        if (patient != null) {
-            // 转换为VO
-            PatientVO vo = PatientConverter.entity2VO(patient);
-            
-            // 获取创建者信息
-            if (vo.getCreatorId() != null) {
-                Doctor doctor = getDoctor(vo.getCreatorId());
-                if (doctor != null) {
-                    vo.setCreatorName(doctor.getRealName() != null ? doctor.getRealName() : doctor.getUsername());
-                }
+        
+        // 转换为VO
+        PatientVO vo = PatientConverter.entity2VO(patient);
+        
+        // 获取创建者信息
+        if (vo.getCreatorId() != null) {
+            Doctor doctor = getDoctor(vo.getCreatorId());
+            if (doctor != null) {
+                vo.setCreatorName(doctor.getRealName() != null ? doctor.getRealName() : doctor.getUsername());
             }
-            
-            return Result.success(vo);
-        } else {
-            return Result.error("患者不存在");
         }
+        
+        return Result.success(vo);
     }
     
     /**
@@ -205,27 +168,24 @@ public class PatientController {
     @AdminOrDoctor
     @Operation(summary = "根据编号查询", description = "根据患者编号查询患者详情")
     public Result<PatientVO> getPatientByPatientNo(@Parameter(description = "患者编号") @PathVariable String patientNo) {
-        if (!StringUtils.hasText(patientNo)) {
-            return Result.error("患者编号不能为空");
-        }
-        
         Patient patient = patientService.getPatientByPatientNo(patientNo);
-        if (patient != null) {
-            // 转换为VO
-            PatientVO vo = PatientConverter.entity2VO(patient);
-            
-            // 获取创建者信息
-            if (vo.getCreatorId() != null) {
-                Doctor doctor = getDoctor(vo.getCreatorId());
-                if (doctor != null) {
-                    vo.setCreatorName(doctor.getRealName() != null ? doctor.getRealName() : doctor.getUsername());
-                }
-            }
-            
-            return Result.success(vo);
-        } else {
+        
+        if (patient == null) {
             return Result.error("患者不存在");
         }
+        
+        // 转换为VO
+        PatientVO vo = PatientConverter.entity2VO(patient);
+        
+        // 获取创建者信息
+        if (vo.getCreatorId() != null) {
+            Doctor doctor = getDoctor(vo.getCreatorId());
+            if (doctor != null) {
+                vo.setCreatorName(doctor.getRealName() != null ? doctor.getRealName() : doctor.getUsername());
+            }
+        }
+        
+        return Result.success(vo);
     }
 
     /**

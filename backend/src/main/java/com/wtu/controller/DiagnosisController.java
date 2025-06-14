@@ -8,7 +8,7 @@ import com.wtu.dto.diagnosis.DiagnosisAnalyzeDTO;
 import com.wtu.dto.diagnosis.UpdateDiagnosisDTO;
 import com.wtu.result.Result;
 import com.wtu.service.DiagnosisService;
-import com.wtu.util.SecurityUtils;
+import com.wtu.utils.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;

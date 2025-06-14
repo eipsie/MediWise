@@ -3,6 +3,8 @@ package com.wtu.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.wtu.entity.Patient;
+import com.wtu.exception.PatientValidationException;
+import com.wtu.exception.ResourceNotFoundException;
 
 import java.util.List;
 
@@ -14,28 +16,32 @@ public interface PatientService {
     /**
      * 创建新患者
      * @param patient 患者信息
-     * @return 创建成功返回true，否则返回false
+     * @return 创建后的患者对象（包含ID）
+     * @throws PatientValidationException 如果患者数据验证失败
      */
-    boolean createPatient(Patient patient);
+    Patient createPatient(Patient patient);
     
     /**
      * 更新患者信息
      * @param patient 患者信息
-     * @return 更新成功返回true，否则返回false
+     * @return 更新后的患者对象
+     * @throws PatientValidationException 如果患者数据验证失败
+     * @throws ResourceNotFoundException 如果患者不存在
      */
-    boolean updatePatient(Patient patient);
+    Patient updatePatient(Patient patient);
     
     /**
      * 根据ID删除患者
      * @param id 患者ID
-     * @return 删除成功返回true，否则返回false
+     * @throws ResourceNotFoundException 如果患者不存在
      */
-    boolean deletePatient(Long id);
+    void deletePatient(Long id);
     
     /**
      * 根据ID查询患者
      * @param id 患者ID
      * @return 患者信息
+     * @throws ResourceNotFoundException 如果患者不存在
      */
     Patient getPatientById(Long id);
     
@@ -43,6 +49,7 @@ public interface PatientService {
      * 根据患者编号查询患者
      * @param patientNo 患者编号
      * @return 患者信息
+     * @throws PatientValidationException 如果患者编号为空
      */
     Patient getPatientByPatientNo(String patientNo);
     
@@ -60,6 +67,7 @@ public interface PatientService {
      * 根据创建医生ID查询患者列表
      * @param doctorId 医生ID
      * @return 患者列表
+     * @throws PatientValidationException 如果医生ID为空
      */
     List<Patient> getPatientsByDoctorId(Long doctorId);
 } 
