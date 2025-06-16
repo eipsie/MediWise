@@ -111,7 +111,7 @@
       </template>
       
       <!-- 医生和管理员都可见的菜单 -->
-      <el-menu-item index="/knowledge">
+      <el-menu-item index="/knowledge" v-if="isDoctorRole">
         <el-icon><Reading /></el-icon>
         <template #title>医学知识库</template>
       </el-menu-item>

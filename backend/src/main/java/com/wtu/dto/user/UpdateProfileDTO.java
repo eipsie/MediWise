@@ -23,6 +23,12 @@ public class UpdateProfileDTO {
     private String department;
     
     /**
+     * 职称
+     */
+    @Schema(description = "职称", example = "主任医师")
+    private String title;
+    
+    /**
      * 电子邮箱
      */
     @Schema(description = "电子邮箱", example = "doctor_zhang@example.com")

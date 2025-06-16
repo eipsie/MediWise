@@ -49,6 +49,7 @@ public class UserServiceImpl implements UserService {
         // 更新用户信息
         doctor.setRealName(updateProfileDTO.getRealName());
         doctor.setDepartment(updateProfileDTO.getDepartment());
+        doctor.setTitle(updateProfileDTO.getTitle());
         doctor.setEmail(updateProfileDTO.getEmail());
         doctor.setPhone(updateProfileDTO.getPhone());
         doctor.setUpdateTime(LocalDateTime.now());

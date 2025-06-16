@@ -34,14 +34,17 @@
         <div class="user-info">
           <el-dropdown trigger="click" @command="handleCommand">
             <div class="user-profile">
-              <el-avatar :size="32" src="https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png" />
-              <span class="user-name">{{ userInfo.realName || userInfo.username || '用户' }}</span>
-              <el-icon><arrow-down /></el-icon>
+              <el-avatar :size="36" :src="avatarUrl" />
+              <div class="user-details">
+                <span class="user-name">{{ userInfo.realName || userInfo.username || '用户' }}</span>
+                <span class="user-title">{{ displayTitle }}</span>
+              </div>
+              <el-icon class="dropdown-icon"><arrow-down /></el-icon>
             </div>
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item command="profile">个人信息</el-dropdown-item>
-                <el-dropdown-item command="settings">系统设置</el-dropdown-item>
+                <el-dropdown-item command="changePassword">修改密码</el-dropdown-item>
                 <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -58,6 +61,12 @@
         </router-view>
       </div>
     </main>
+    
+    <!-- 个人信息弹窗 -->
+    <profile-dialog v-model:visible="profileDialogVisible" @refresh="refreshUserInfo" />
+    
+    <!-- 修改密码弹窗 -->
+    <password-dialog v-model:visible="passwordDialogVisible" />
   </div>
 </template>
 
@@ -72,6 +81,9 @@ import {
 } from '@element-plus/icons-vue'
 import { getUserInfo, getUserRole, removeToken } from '../../utils/jwt'
 import SideMenu from './SideMenu.vue'
+import ProfileDialog from '../user/ProfileDialog.vue'
+import PasswordDialog from '../user/PasswordDialog.vue'
+import { getCurrentUserProfile } from '../../api/user'
 
 // 路由相关
 const route = useRoute()
@@ -89,6 +101,42 @@ const hasAdminRole = computed(() => {
   const role = getUserRole()
   return role === 'ADMIN'
 })
+
+// 生成医生头像URL
+const avatarUrl = computed(() => {
+  // 如果是管理员，使用不同的头像
+  if (hasAdminRole.value) {
+    return 'https://cdn.pixabay.com/photo/2016/03/31/20/37/administrator-1295900_1280.png';
+  }
+  
+  // 如果有职称，根据职称生成不同的头像
+  const title = userInfo.value.title;
+  if (title) {
+    if (title.includes('主任') || title.includes('教授')) {
+      return 'https://cdn.pixabay.com/photo/2017/01/31/22/32/doctor-2027768_1280.png';
+    } else if (title.includes('副主任') || title.includes('副教授')) {
+      return 'https://cdn.pixabay.com/photo/2020/07/01/17/57/doctor-5360910_1280.png';
+    } else if (title.includes('主治') || title.includes('讲师')) {
+      return 'https://cdn.pixabay.com/photo/2017/03/14/03/20/nurse-2141808_1280.png';
+    }
+  }
+  
+  // 默认医生头像
+  return 'https://cdn.pixabay.com/photo/2017/01/31/22/32/doctor-2027768_1280.png';
+})
+
+// 显示的职称文本
+const displayTitle = computed(() => {
+  if (hasAdminRole.value) {
+    return '系统管理员';
+  }
+  
+  return userInfo.value.title || '医生';
+})
+
+// 弹窗可见性控制
+const profileDialogVisible = ref(false)
+const passwordDialogVisible = ref(false)
 
 // 根据角色确定首页路径
 const homeRoute = computed(() => {
@@ -134,10 +182,10 @@ const breadcrumbItems = computed(() => {
 const handleCommand = async (command) => {
   switch (command) {
     case 'profile':
-      ElMessage.info('个人信息功能开发中...')
+      profileDialogVisible.value = true
       break
-    case 'settings':
-      ElMessage.info('系统设置功能开发中...')
+    case 'changePassword':
+      passwordDialogVisible.value = true
       break
     case 'logout':
       try {
@@ -162,12 +210,28 @@ const handleCommand = async (command) => {
   }
 }
 
-// 组件挂载时检查用户信息
-onMounted(() => {
-  if (!userInfo.value || !userInfo.value.username) {
-    // 获取最新的用户信息
-    userInfo.value = getUserInfo() || {}
+// 刷新用户信息
+const refreshUserInfo = async () => {
+  try {
+    const res = await getCurrentUserProfile()
+    if (res.data && res.data.code === 1) {
+      userInfo.value = {
+        ...getUserInfo(),
+        ...res.data.data
+      }
+    }
+  } catch (error) {
+    console.error('获取用户信息失败:', error)
   }
+}
+
+// 组件挂载时检查用户信息
+onMounted(async () => {
+  // 先获取token中的基本信息
+  userInfo.value = getUserInfo() || {}
+  
+  // 然后通过API请求获取完整用户信息
+  await refreshUserInfo()
 })
 </script>
 
@@ -324,20 +388,54 @@ onMounted(() => {
   display: flex;
   align-items: center;
   cursor: pointer;
-  padding: 6px 12px;
-  border-radius: 6px;
-  transition: background-color 0.3s;
+  padding: 8px 12px 8px 16px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
   color: #fff;
 }
 
 .user-profile:hover {
-  background-color: rgba(255, 255, 255, 0.15);
+  background-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  transform: translateY(-1px);
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  margin: 0 12px 0 12px;
+  min-width: 70px;
+  text-align: left;
 }
 
 .user-name {
-  margin: 0 8px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.user-title {
+  font-size: 12px;
+  opacity: 0.9;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.dropdown-icon {
+  margin-left: 2px;
   font-size: 14px;
-  font-weight: 500;
+  transition: transform 0.3s;
+}
+
+.user-profile:hover .dropdown-icon {
+  transform: rotate(180deg);
 }
 
 .page-view {
