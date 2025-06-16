@@ -1,3 +1,135 @@
+/**
+ * 全局CSS变量和通用样式
+ */
+
+:root {
+  /* 主题色 */
+  --primary-color: #409EFF;
+  --success-color: #67C23A;
+  --warning-color: #E6A23C;
+  --danger-color: #F56C6C;
+  --info-color: #909399;
+  
+  /* 医疗相关颜色 */
+  --medical-primary: #3f8cda;
+  --medical-success: #45B787;
+  --medical-warning: #E6A23C;
+  --medical-danger: #F56C6C;
+  
+  /* 背景色 */
+  --background-color: #f5f7fa;
+  --card-background: #ffffff;
+  
+  /* 文字颜色 */
+  --text-primary: #303133;
+  --text-regular: #606266;
+  --text-secondary: #909399;
+  --text-placeholder: #c0c4cc;
+  
+  /* 边框颜色 */
+  --border-color-base: #dcdfe6;
+  --border-color-light: #e4e7ed;
+  --border-color-lighter: #ebeef5;
+  --border-color-extra-light: #f2f6fc;
+  
+  /* 圆角 */
+  --border-radius-small: 2px;
+  --border-radius-base: 4px;
+  --border-radius-medium: 8px;
+  --border-radius-large: 12px;
+  
+  /* 阴影 */
+  --box-shadow-light: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+  --box-shadow-base: 0 2px 4px rgba(0, 0, 0, .12), 0 0 6px rgba(0, 0, 0, .04);
+  --box-shadow-dark: 0 2px 10px rgba(0, 0, 0, 0.1);
+  
+  /* 字体 */
+  --font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+  
+  /* 过渡效果 */
+  --transition-duration: 0.3s;
+}
+
+/* 修改Element Plus 组件样式 */
+.el-button {
+  border-radius: var(--border-radius-base);
+}
+
+.el-card {
+  border-radius: var(--border-radius-medium);
+  transition: transform var(--transition-duration), box-shadow var(--transition-duration);
+  overflow: hidden;
+}
+
+.el-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--box-shadow-dark);
+}
+
+.el-table {
+  border-radius: var(--border-radius-base);
+  overflow: hidden;
+}
+
+.el-pagination {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* 通用布局类 */
+.page-container {
+  padding: 20px;
+  height: 100%;
+  overflow-y: auto;
+  background-color: var(--background-color);
+}
+
+.flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 工具提示样式 */
+.has-tooltip {
+  cursor: help;
+  border-bottom: 1px dotted var(--border-color-base);
+}
+
+/* 动画效果 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity var(--transition-duration);
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* 响应式工具类 */
+@media (max-width: 768px) {
+  .hide-on-mobile {
+    display: none !important;
+  }
+  
+  .page-container {
+    padding: 10px;
+  }
+}
+
 /* 自定义下拉菜单样式 */
 .diagnosis-status-dropdown {
   min-width: 160px !important;

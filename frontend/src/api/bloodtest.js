@@ -1,4 +1,5 @@
 import request from './auth'
+import { BLOOD_TEST_CONFIG } from '../config/constants'
 
 /**
  * 创建血常规检查记录
@@ -6,20 +7,12 @@ import request from './auth'
  * @returns {Promise}
  */
 export const createBloodTest = (data) => {
-  console.log('Creating blood test with data:', JSON.stringify(data, null, 2));
   return request({
     url: '/api/blood-tests',
     method: 'post',
     data,
-    timeout: 15000 // 增加超时时间为15秒
-  }).catch(error => {
-    console.error('Blood test creation error:', error);
-    if (error.response) {
-      console.error('Response data:', error.response.data);
-      console.error('Response status:', error.response.status);
-    }
-    throw error;
-  });
+    timeout: 15000
+  })
 }
 
 /**
@@ -56,7 +49,7 @@ export const analyzeBloodTest = (data) => {
     url: '/api/blood-tests/analyze',
     method: 'post',
     data,
-    timeout: 30000 // 增加超时时间到30秒，以适应长时间运行的AI分析请求
+    timeout: 30000
   })
 }
 
@@ -82,12 +75,12 @@ export const getPatientBloodTests = (patientId, page = 1, size = 10) => {
  */
 export const getBloodTestList = (params) => {
   // 过滤掉空字符串参数
-  const filteredParams = {};
+  const filteredParams = {}
   Object.keys(params).forEach(key => {
     if (params[key] !== undefined && params[key] !== '') {
-      filteredParams[key] = params[key];
+      filteredParams[key] = params[key]
     }
-  });
+  })
   
   return request({
     url: '/api/blood-tests',
@@ -97,20 +90,30 @@ export const getBloodTestList = (params) => {
 }
 
 /**
+ * 获取所有血常规检查项目配置
+ * @returns {Array} 配置数组
+ */
+export const getBloodTestFields = () => {
+  return BLOOD_TEST_CONFIG.fields
+}
+
+/**
+ * 获取单个血常规检查项配置
+ * @param {string} field 字段名称
+ * @returns {Object|null} 配置对象
+ */
+export const getBloodTestField = (field) => {
+  return BLOOD_TEST_CONFIG.fields.find(item => item.field === field) || null
+}
+
+/**
  * 格式化血常规字段名称
  * @param key 字段名
  * @returns {string} 显示名称
  */
 export const getBloodTestFieldLabel = (key) => {
-  const labels = {
-    wbc: '白细胞计数',
-    rbc: '红细胞计数',
-    hgb: '血红蛋白',
-    plt: '血小板计数',
-    neutp: '中性粒细胞百分比',
-    lymp: '淋巴细胞百分比'
-  }
-  return labels[key] || key
+  const field = getBloodTestField(key)
+  return field ? field.label : key
 }
 
 /**
@@ -119,15 +122,8 @@ export const getBloodTestFieldLabel = (key) => {
  * @returns {string} 字段单位
  */
 export const getBloodTestFieldUnit = (key) => {
-  const units = {
-    wbc: '× 10^9/L',
-    rbc: '× 10^12/L',
-    hgb: 'g/L',
-    plt: '× 10^9/L',
-    neutp: '%',
-    lymp: '%'
-  }
-  return units[key] || ''
+  const field = getBloodTestField(key)
+  return field ? field.unit : ''
 }
 
 /**
@@ -136,15 +132,8 @@ export const getBloodTestFieldUnit = (key) => {
  * @returns {Object} 包含最小值、最大值的对象
  */
 export const getBloodTestReferenceRange = (key) => {
-  const ranges = {
-    wbc: { min: 4.0, max: 10.0 },
-    rbc: { min: 3.5, max: 5.5 },
-    hgb: { min: 110, max: 160 },
-    plt: { min: 100, max: 300 },
-    neutp: { min: 50, max: 70 },
-    lymp: { min: 20, max: 40 }
-  }
-  return ranges[key] || { min: null, max: null }
+  const field = getBloodTestField(key)
+  return field ? { min: field.min, max: field.max } : { min: null, max: null }
 }
 
 /**
@@ -155,23 +144,23 @@ export const getBloodTestReferenceRange = (key) => {
  */
 export const getBloodTestValueStatus = (key, value) => {
   if (value === null || value === undefined) {
-    return null;
+    return null
   }
   
-  const range = getBloodTestReferenceRange(key);
+  const range = getBloodTestReferenceRange(key)
   if (range.min === null || range.max === null) {
-    return null;
+    return null
   }
   
-  const numValue = Number(value);
+  const numValue = Number(value)
   if (isNaN(numValue)) {
-    return null;
+    return null
   }
   
   if (numValue > range.max) {
-    return 'high';
+    return 'high'
   } else if (numValue < range.min) {
-    return 'low';
+    return 'low'
   }
-  return null;
+  return null
 } 

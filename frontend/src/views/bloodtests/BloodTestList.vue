@@ -10,7 +10,7 @@
     </div>
 
     <!-- 搜索和筛选工具条 -->
-    <el-card class="filter-card">
+    <el-card class="filter-card" shadow="hover">
       <el-form :inline="true" :model="searchForm" class="search-form">
         <el-form-item label="关键词">
           <el-input
@@ -35,7 +35,7 @@
     </el-card>
 
     <!-- 血常规检查记录表格 -->
-    <el-card class="table-card">
+    <el-card class="table-card" shadow="hover">
       <el-table
         v-loading="loading"
         :data="bloodTestList"
@@ -43,46 +43,51 @@
         style="width: 100%"
         border
         row-key="id"
+        @row-click="handleRowClick"
+        :row-class-name="tableRowClassName"
       >
         <el-table-column prop="testDate" label="检测时间" width="180">
           <template #default="scope">
             {{ formatDateTime(scope.row.testDate) }}
           </template>
         </el-table-column>
-        <el-table-column prop="patientName" label="患者姓名" width="120" />
+        <el-table-column prop="patientName" label="患者姓名" width="120">
+          <template #default="scope">
+            <span class="patient-name">{{ scope.row.patientName }}</span>
+          </template>
+        </el-table-column>
         <el-table-column label="血常规结果" min-width="400">
           <template #default="scope">
             <div class="blood-test-values">
-              <span class="blood-value" :class="getValueClass(scope.row.wbc, 'wbc')">
-                WBC: {{ scope.row.wbc }}
-              </span>
-              <span class="blood-value" :class="getValueClass(scope.row.rbc, 'rbc')">
-                RBC: {{ scope.row.rbc }}
-              </span>
-              <span class="blood-value" :class="getValueClass(scope.row.hgb, 'hgb')">
-                HGB: {{ scope.row.hgb }}
-              </span>
-              <span class="blood-value" :class="getValueClass(scope.row.plt, 'plt')">
-                PLT: {{ scope.row.plt }}
+              <span v-for="(item, index) in bloodTestItems" :key="index"
+                class="blood-value" 
+                :class="getValueClass(scope.row[item.field], item.field)"
+                v-tooltip="getTooltip(scope.row[item.field], item.field)"
+              >
+                {{ item.shortName }}: {{ scope.row[item.field] !== undefined && scope.row[item.field] !== null ? scope.row[item.field] : '--' }}
               </span>
             </div>
           </template>
         </el-table-column>
         <el-table-column label="AI分析" width="120">
           <template #default="scope">
-            <el-tag type="success" v-if="scope.row.aiAnalysisResult" size="small">已分析</el-tag>
+            <el-tag type="success" v-if="scope.row.aiAnalysisResult" size="small" effect="dark">已分析</el-tag>
             <el-tag type="info" v-else size="small">未分析</el-tag>
           </template>
         </el-table-column>
         <el-table-column fixed="right" label="操作" width="180">
           <template #default="scope">
-            <el-button link type="primary" size="small" @click="viewBloodTest(scope.row)">查看</el-button>
+            <el-button link type="primary" size="small" @click.stop="viewBloodTest(scope.row)">
+              <el-icon><View /></el-icon>查看
+            </el-button>
             <el-popconfirm
               title="确定要删除此记录吗?"
               @confirm="handleDeleteBloodTest(scope.row.id)"
             >
               <template #reference>
-                <el-button link type="danger" size="small">删除</el-button>
+                <el-button link type="danger" size="small" @click.stop>
+                  <el-icon><Delete /></el-icon>删除
+                </el-button>
               </template>
             </el-popconfirm>
           </template>
@@ -110,6 +115,7 @@
           :total="pagination.total"
           @size-change="handleSizeChange"
           @current-change="handleCurrentChange"
+          background
         />
       </div>
     </el-card>
@@ -120,18 +126,24 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Plus, Search } from '@element-plus/icons-vue'
+import { Plus, Search, View, Delete } from '@element-plus/icons-vue'
 import { 
   getBloodTestList, 
   deleteBloodTest,
-  analyzeBloodTest as analyzeAPI,
   getBloodTestValueStatus
 } from '../../api/bloodtest'
 
 const router = useRouter()
 const loading = ref(false)
-const analyzing = ref(false)
 const bloodTestList = ref([])
+
+// 血常规检查项目配置
+const bloodTestItems = [
+  { field: 'wbc', shortName: 'WBC', label: '白细胞计数', unit: '× 10^9/L', reference: '4.0-10.0' },
+  { field: 'rbc', shortName: 'RBC', label: '红细胞计数', unit: '× 10^12/L', reference: '3.5-5.5' },
+  { field: 'hgb', shortName: 'HGB', label: '血红蛋白', unit: 'g/L', reference: '110-160' },
+  { field: 'plt', shortName: 'PLT', label: '血小板计数', unit: '× 10^9/L', reference: '100-300' }
+]
 
 // 搜索表单
 const searchForm = reactive({
@@ -140,7 +152,7 @@ const searchForm = reactive({
 
 // 判断是否在搜索状态
 const isSearching = computed(() => {
-  return searchForm.keyword;
+  return searchForm.keyword
 })
 
 // 分页参数
@@ -152,32 +164,50 @@ const pagination = reactive({
 
 // 格式化日期时间
 const formatDateTime = (dateTime) => {
-  if (!dateTime) return '';
-  
+  if (!dateTime) return ''
   try {
-    const date = new Date(dateTime);
+    const date = new Date(dateTime)
     return date.toLocaleString('zh-CN', { 
-      year: 'numeric', 
-      month: '2-digit', 
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit'
+    })
   } catch (e) {
-    console.error('格式化日期错误:', e);
-    return dateTime;
+    return dateTime
   }
 }
 
 // 获取值的CSS类
 const getValueClass = (value, field) => {
-  const status = getBloodTestValueStatus(field, value);
+  const status = getBloodTestValueStatus(field, value)
+  return status === 'high' ? 'value-high' : status === 'low' ? 'value-low' : ''
+}
+
+// 获取表格行的类名
+const tableRowClassName = ({ row }) => {
+  return row.aiAnalysisResult ? 'has-analysis-row' : ''
+}
+
+// 获取提示信息
+const getTooltip = (value, field) => {
+  if (value === undefined || value === null) return ''
+  
+  const item = bloodTestItems.find(item => item.field === field)
+  if (!item) return ''
+  
+  const status = getBloodTestValueStatus(field, value)
+  let statusText = '正常'
   if (status === 'high') {
-    return 'value-high';
+    statusText = '高于参考值'
   } else if (status === 'low') {
-    return 'value-low';
+    statusText = '低于参考值'
   }
-  return '';
+  
+  return `${item.label} (${item.shortName}): ${value} ${item.unit}\n参考范围: ${item.reference} ${item.unit}\n状态: ${statusText}`
+}
+
+// 处理行点击
+const handleRowClick = (row) => {
+  viewBloodTest(row)
 }
 
 // 获取血常规检查记录列表
@@ -190,20 +220,15 @@ const fetchBloodTestList = async () => {
       keyword: searchForm.keyword || undefined
     }
     
-    console.log('血常规检查搜索参数:', params)
-    
     const res = await getBloodTestList(params)
     if (res.data && res.data.code === 1) {
       const pageData = res.data.data
       bloodTestList.value = pageData.records || []
       pagination.total = pageData.total || 0
-      
-      console.log(`搜索到 ${pagination.total} 条记录`)
     } else {
       ElMessage.error(res.data?.message || '获取血常规检查记录失败')
     }
   } catch (error) {
-    console.error('获取血常规检查记录出错:', error)
     ElMessage.error('获取血常规检查记录出错')
   } finally {
     loading.value = false
@@ -259,39 +284,7 @@ const handleDeleteBloodTest = async (id) => {
       ElMessage.error(res.data?.message || '删除失败')
     }
   } catch (error) {
-    console.error('删除血常规检查记录出错:', error)
     ElMessage.error('删除出错')
-  }
-}
-
-// AI分析
-const analyzeBloodTest = async (row) => {
-  if (analyzing.value) {
-    ElMessage.warning('正在处理另一个分析请求，请稍后再试')
-    return
-  }
-  
-  analyzing.value = true
-  try {
-    const res = await analyzeAPI({
-      bloodTestId: row.id,
-      applyMedicalPrompt: true
-    })
-    
-    if (res.data && res.data.code === 1) {
-      ElMessage.success('AI分析请求已提交')
-      // 刷新列表
-      setTimeout(() => {
-        fetchBloodTestList()
-      }, 1000)
-    } else {
-      ElMessage.error(res.data?.message || 'AI分析请求失败')
-    }
-  } catch (error) {
-    console.error('AI分析出错:', error)
-    ElMessage.error('AI分析请求出错')
-  } finally {
-    analyzing.value = false
   }
 }
 
@@ -306,6 +299,7 @@ onMounted(() => {
   padding: 20px;
   height: 100%;
   overflow-y: auto;
+  background-color: #f5f7fa;
 }
 
 .page-header {
@@ -313,14 +307,27 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  background-color: white;
+  padding: 15px 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.05);
+}
+
+.page-header h2 {
+  margin: 0;
+  color: #303133;
 }
 
 .filter-card {
   margin-bottom: 20px;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .table-card {
   margin-bottom: 20px;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .pagination-container {
@@ -336,10 +343,17 @@ onMounted(() => {
 }
 
 .blood-value {
-  padding: 2px 8px;
+  padding: 3px 8px;
   border-radius: 4px;
   background-color: #f5f7fa;
   font-family: monospace;
+  transition: all 0.3s;
+  cursor: default;
+}
+
+.blood-value:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .value-high {
@@ -352,5 +366,42 @@ onMounted(() => {
   color: #e6a23c;
   font-weight: bold;
   background-color: #fdf6ec;
+}
+
+.patient-name {
+  font-weight: 500;
+}
+
+:deep(.has-analysis-row) {
+  background-color: #f0f9eb;
+}
+
+:deep(.el-table__row) {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+:deep(.el-table__row:hover) {
+  background-color: #ecf5ff !important;
+}
+
+@media (max-width: 768px) {
+  .blood-test-list {
+    padding: 10px;
+  }
+  
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .header-actions {
+    margin-top: 10px;
+    width: 100%;
+  }
+  
+  .search-form {
+    flex-wrap: wrap;
+  }
 }
 </style> 
