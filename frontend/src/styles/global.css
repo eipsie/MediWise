@@ -1,0 +1,51 @@
+/* 自定义下拉菜单样式 */
+.diagnosis-status-dropdown {
+  min-width: 160px !important;
+}
+
+/* 确保状态标签完整显示 */
+.el-tag {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 表单项样式优化 */
+.search-form .el-form-item {
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+/* 自定义空状态组件样式 */
+.patient-empty {
+  padding: 5px 0 !important;
+  height: auto;
+}
+
+.patient-empty .el-empty {
+  padding: 5px 0 !important;
+  margin: 0;
+}
+
+.patient-empty .el-empty__image {
+  width: 60px !important;  /* 进一步减小图片尺寸 */
+  height: auto !important;
+}
+
+.patient-empty .el-empty__description {
+  margin-top: 2px !important;
+}
+
+.patient-empty .el-empty__bottom {
+  margin-top: 2px !important;
+}
+
+/* 调整患者信息卡片内边距 */
+.diagnosis-form .patient-card .el-card__body {
+  padding: 10px !important;
+}
+
+.diagnosis-form .patient-card .el-card__header {
+  padding: 10px 15px !important;
+} 

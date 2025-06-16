@@ -211,18 +211,72 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisRecordMapper, Dia
         // 创建分页对象
         Page<DiagnosisRecord> recordPage = new Page<>(page, size);
         
-        // 使用MyBatis-Plus的LambdaQueryWrapper查询
-        LambdaQueryWrapper<DiagnosisRecord> queryWrapper = Wrappers.<DiagnosisRecord>lambdaQuery()
-                .like(keyword != null && !keyword.isEmpty(), DiagnosisRecord::getSymptomsText, keyword)
-                .or()
-                .like(keyword != null && !keyword.isEmpty(), DiagnosisRecord::getFinalDiagnosis, keyword)
-                .eq(status != null && !status.isEmpty(), DiagnosisRecord::getStatus, status)
-                .orderByDesc(DiagnosisRecord::getCreateTime);
+        // 获取所有符合条件的诊断记录ID
+        List<Long> matchedIds = new ArrayList<>();
+        
+        // 如果有关键词搜索，先查询包含该姓名的患者
+        if (keyword != null && !keyword.isEmpty()) {
+            // 查询匹配姓名的患者
+            LambdaQueryWrapper<Patient> patientQueryWrapper = Wrappers.<Patient>lambdaQuery()
+                    .like(Patient::getName, keyword);
+            List<Patient> matchedPatients = patientMapper.selectList(patientQueryWrapper);
+            
+            if (!matchedPatients.isEmpty()) {
+                // 获取这些患者的诊断记录
+                List<Long> patientIds = matchedPatients.stream().map(Patient::getId).collect(java.util.stream.Collectors.toList());
+                LambdaQueryWrapper<DiagnosisRecord> patientRecordQuery = Wrappers.<DiagnosisRecord>lambdaQuery()
+                        .in(DiagnosisRecord::getPatientId, patientIds);
+                
+                // 如果有状态筛选，添加状态条件
+                if (status != null && !status.isEmpty()) {
+                    patientRecordQuery.eq(DiagnosisRecord::getStatus, status);
+                }
+                
+                patientRecordQuery.orderByDesc(DiagnosisRecord::getCreateTime);
+                
+                List<DiagnosisRecord> patientRecords = list(patientRecordQuery);
+                List<Long> patientRecordIds = patientRecords.stream().map(DiagnosisRecord::getId).collect(java.util.stream.Collectors.toList());
+                matchedIds.addAll(patientRecordIds);
+            }
+        }
+        
+        // 构建诊断记录查询条件
+        LambdaQueryWrapper<DiagnosisRecord> queryWrapper = Wrappers.<DiagnosisRecord>lambdaQuery();
+        
+        // 添加关键词查询条件（症状和诊断结果）
+        if (keyword != null && !keyword.isEmpty()) {
+            queryWrapper.and(wrapper -> wrapper
+                    .like(DiagnosisRecord::getSymptomsText, keyword)
+                    .or()
+                    .like(DiagnosisRecord::getFinalDiagnosis, keyword)
+                    .or()
+                    .like(DiagnosisRecord::getTreatmentPlan, keyword));
+        }
+        
+        // 添加状态筛选条件
+        if (status != null && !status.isEmpty()) {
+            queryWrapper.eq(DiagnosisRecord::getStatus, status);
+        }
+        
+        // 如果已经找到了通过患者姓名匹配的记录，添加到条件中
+        if (!matchedIds.isEmpty()) {
+            // 使用OR连接符，表示符合姓名搜索的记录也应当被包含
+            queryWrapper.or().in(DiagnosisRecord::getId, matchedIds);
+        }
+        
+        // 按创建时间降序排序
+        queryWrapper.orderByDesc(DiagnosisRecord::getCreateTime);
+        
+        // 日志记录查询条件
+        log.info("诊断列表查询条件: keyword={}, status={}, 匹配的患者记录数={}", keyword, status, matchedIds.size());
         
         Page<DiagnosisRecord> resultPage = page(recordPage, queryWrapper);
         
-        // 转换为VO
-        return convertToVOPage(resultPage);
+        // 转换为VO并返回
+        Page<DiagnosisVO> voPage = convertToVOPage(resultPage);
+        log.info("诊断列表查询结果: 总记录数={}", voPage.getTotal());
+        
+        return voPage;
     }
 
     /**

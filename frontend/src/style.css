@@ -75,3 +75,16 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+/* 自定义下拉菜单样式 */
+.diagnosis-status-dropdown {
+  min-width: 160px !important;
+}
+
+/* 确保状态标签完整显示 */
+.el-tag {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
