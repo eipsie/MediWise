@@ -3,6 +3,8 @@ package com.wtu.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.wtu.VO.diagnosis.DiagnosisVO;
 import com.wtu.annotation.DoctorOnly;
+import com.wtu.annotation.OperationLog;
+import com.wtu.constant.LogConstant;
 import com.wtu.dto.diagnosis.CreateDiagnosisDTO;
 import com.wtu.dto.diagnosis.DiagnosisAnalyzeDTO;
 import com.wtu.dto.diagnosis.UpdateDiagnosisDTO;
@@ -31,6 +33,7 @@ public class DiagnosisController {
     @PostMapping
     @Operation(summary = "创建诊断记录", description = "创建新的诊断记录")
     @DoctorOnly
+    @OperationLog(actionType = LogConstant.ActionType.DIAGNOSIS_CREATE, actionDesc = "创建新诊断记录")
     public Result<DiagnosisVO> createDiagnosis(@RequestBody @Valid CreateDiagnosisDTO createDTO) {
         Long doctorId = SecurityUtils.getCurrentUserId();
         DiagnosisVO result = diagnosisService.createDiagnosis(createDTO, doctorId);
@@ -40,6 +43,7 @@ public class DiagnosisController {
     @GetMapping("/{id}")
     @Operation(summary = "获取诊断记录详情", description = "根据ID获取诊断记录详情")
     @DoctorOnly
+    @OperationLog(actionType = LogConstant.ActionType.DIAGNOSIS_QUERY, actionDesc = "查看诊断记录详情")
     public Result<DiagnosisVO> getDiagnosis(
             @Parameter(description = "诊断记录ID") @PathVariable Long id) {
         DiagnosisVO result = diagnosisService.getDiagnosis(id);
@@ -49,6 +53,7 @@ public class DiagnosisController {
     @PutMapping("/{id}")
     @Operation(summary = "更新诊断记录", description = "更新诊断记录信息")
     @DoctorOnly
+    @OperationLog(actionType = LogConstant.ActionType.DIAGNOSIS_UPDATE, actionDesc = "更新诊断记录信息")
     public Result<DiagnosisVO> updateDiagnosis(
             @Parameter(description = "诊断记录ID") @PathVariable Long id,
             @RequestBody @Valid UpdateDiagnosisDTO updateDTO) {
@@ -60,6 +65,7 @@ public class DiagnosisController {
     @PostMapping("/analyze")
     @Operation(summary = "AI分析诊断", description = "使用AI分析诊断记录")
     @DoctorOnly
+    @OperationLog(actionType = LogConstant.ActionType.AI_DIAGNOSIS_CALL, actionDesc = "使用AI辅助诊断")
     public Result<DiagnosisVO> analyzeDiagnosis(@RequestBody @Valid DiagnosisAnalyzeDTO analyzeDTO) {
         DiagnosisVO result = diagnosisService.analyzeDiagnosis(analyzeDTO);
         return Result.success(result);
@@ -68,6 +74,7 @@ public class DiagnosisController {
     @GetMapping("/patient/{patientId}")
     @Operation(summary = "获取患者诊断历史", description = "获取指定患者的诊断记录历史")
     @DoctorOnly
+    @OperationLog(actionType = LogConstant.ActionType.DIAGNOSIS_QUERY, actionDesc = "查询患者诊断历史")
     public Result<Page<DiagnosisVO>> getPatientDiagnoses(
             @Parameter(description = "患者ID") @PathVariable Long patientId,
             @Parameter(description = "页码") @RequestParam(defaultValue = "1") int page,
@@ -79,6 +86,7 @@ public class DiagnosisController {
     @GetMapping
     @Operation(summary = "分页查询诊断记录", description = "分页查询诊断记录列表")
     @PreAuthorize("hasRole('DOCTOR')")
+    @OperationLog(actionType = LogConstant.ActionType.DIAGNOSIS_QUERY, actionDesc = "分页查询诊断记录")
     public Result<Page<DiagnosisVO>> listDiagnoses(
             @Parameter(description = "页码") @RequestParam(defaultValue = "1") int page,
             @Parameter(description = "每页大小") @RequestParam(defaultValue = "10") int size,

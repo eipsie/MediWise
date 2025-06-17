@@ -1,26 +1,20 @@
-package com.wtu.entity;
+package com.wtu.VO.log;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
 /**
- * 系统日志实体类
- * 对应数据库中的system_log表
+ * 系统日志视图对象
  */
 @Data
-@TableName("system_log")
-@Schema(description = "系统日志实体")
-public class SystemLog {
+@Schema(description = "系统日志视图对象")
+public class SystemLogVO {
     
     /**
      * 主键ID
      */
-    @TableId(type = IdType.AUTO)
     @Schema(description = "日志ID", example = "1")
     private Long id;
     
@@ -107,10 +101,4 @@ public class SystemLog {
      */
     @Schema(description = "操作时间")
     private LocalDateTime logTime;
-    
-    /**
-     * 创建时间
-     */
-    @Schema(description = "创建时间")
-    private LocalDateTime createTime;
-} 
+}

@@ -1,5 +1,7 @@
 package com.wtu.controller;
 
+import com.wtu.annotation.OperationLog;
+import com.wtu.constant.LogConstant;
 import com.wtu.dto.auth.LoginDTO;
 import com.wtu.dto.auth.RegisterDTO;
 import com.wtu.entity.Doctor;
@@ -33,6 +35,7 @@ public class AuthController {
      */
     @Operation(summary = "医生登录", description = "用户名密码登录")
     @PostMapping("/login")
+    @OperationLog(actionType = LogConstant.ActionType.USER_LOGIN, actionDesc = "用户登录系统")
     public Result<LoginVO> login(@Parameter(description = "登录信息") @RequestBody LoginDTO loginDTO) {
         // 调用服务层进行登录验证
         String token = authService.login(loginDTO.getUsername(), loginDTO.getPassword());
@@ -54,6 +57,7 @@ public class AuthController {
      */
     @Operation(summary = "医生注册", description = "新用户注册")
     @PostMapping("/register")
+    @OperationLog(actionType = LogConstant.ActionType.USER_CREATE, actionDesc = "新医生注册")
     public Result<Void> register(@Parameter(description = "注册信息") @RequestBody RegisterDTO registerDTO) {
         boolean success = authService.register(registerDTO);
         if(success) {
