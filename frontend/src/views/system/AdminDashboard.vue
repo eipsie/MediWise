@@ -10,12 +10,12 @@
             <el-icon><User /></el-icon>
           </div>
           <div class="stat-info">
-            <div class="stat-value">24</div>
+            <div class="stat-value">{{ statistics.userCount || 0 }}</div>
             <div class="stat-label">系统用户</div>
           </div>
         </div>
         <div class="stat-footer">
-          <span class="trend-up">↑ 2</span>
+          <span class="trend-up" v-if="statistics.newUsersThisMonth > 0">↑ {{ statistics.newUsersThisMonth }}</span>
           <span class="trend-text">本月新增</span>
         </div>
       </el-card>
@@ -26,7 +26,7 @@
             <el-icon><UserFilled /></el-icon>
           </div>
           <div class="stat-info">
-            <div class="stat-value">3</div>
+            <div class="stat-value">{{ statistics.roleCount || 0 }}</div>
             <div class="stat-label">系统角色</div>
           </div>
         </div>
@@ -37,32 +37,16 @@
       
       <el-card class="stat-card">
         <div class="stat-content">
-          <div class="stat-icon knowledge">
-            <el-icon><Document /></el-icon>
-          </div>
-          <div class="stat-info">
-            <div class="stat-value">156</div>
-            <div class="stat-label">知识库条目</div>
-          </div>
-        </div>
-        <div class="stat-footer">
-          <span class="trend-up">↑ 12</span>
-          <span class="trend-text">本月新增</span>
-        </div>
-      </el-card>
-      
-      <el-card class="stat-card">
-        <div class="stat-content">
           <div class="stat-icon logs">
             <el-icon><List /></el-icon>
           </div>
           <div class="stat-info">
-            <div class="stat-value">1,283</div>
+            <div class="stat-value">{{ statistics.logCount || 0 }}</div>
             <div class="stat-label">系统日志</div>
           </div>
         </div>
         <div class="stat-footer">
-          <span class="trend-up">↑ 128</span>
+          <span class="trend-up" v-if="statistics.newLogsToday > 0">↑ {{ statistics.newLogsToday }}</span>
           <span class="trend-text">今日新增</span>
         </div>
       </el-card>
@@ -72,43 +56,43 @@
     <h3 class="section-title">快捷入口</h3>
     <div class="quick-access">
       <el-row :gutter="20">
-        <el-col :xs="12" :sm="8" :md="6">
+        <el-col :xs="12" :sm="6" :md="6">
           <router-link to="/system/users" class="quick-link">
             <el-card shadow="hover" class="quick-card">
               <div class="quick-icon">
                 <el-icon><User /></el-icon>
               </div>
-              <div class="quick-title">用户管理</div>
-              <div class="quick-desc">管理系统用户账号</div>
+              <div class="quick-title">医生管理</div>
+              <div class="quick-desc">管理系统医生账号</div>
             </el-card>
           </router-link>
         </el-col>
         
-        <el-col :xs="12" :sm="8" :md="6">
-          <router-link to="/system/roles" class="quick-link">
+        <el-col :xs="12" :sm="6" :md="6">
+          <router-link to="/patients/list" class="quick-link">
             <el-card shadow="hover" class="quick-card">
               <div class="quick-icon">
-                <el-icon><UserFilled /></el-icon>
+                <el-icon><Avatar /></el-icon>
               </div>
-              <div class="quick-title">角色管理</div>
-              <div class="quick-desc">管理系统角色权限</div>
+              <div class="quick-title">患者管理</div>
+              <div class="quick-desc">管理患者信息</div>
             </el-card>
           </router-link>
         </el-col>
         
-        <el-col :xs="12" :sm="8" :md="6">
-          <router-link to="/knowledge/manage" class="quick-link">
+        <el-col :xs="12" :sm="6" :md="6">
+          <router-link to="/knowledge/list" class="quick-link">
             <el-card shadow="hover" class="quick-card">
               <div class="quick-icon">
                 <el-icon><Document /></el-icon>
               </div>
-              <div class="quick-title">知识库管理</div>
-              <div class="quick-desc">管理医学知识库内容</div>
+              <div class="quick-title">知识列表</div>
+              <div class="quick-desc">管理医疗知识库</div>
             </el-card>
           </router-link>
         </el-col>
         
-        <el-col :xs="12" :sm="8" :md="6">
+        <el-col :xs="12" :sm="6" :md="6">
           <router-link to="/system/logs" class="quick-link">
             <el-card shadow="hover" class="quick-card">
               <div class="quick-icon">
@@ -122,120 +106,132 @@
       </el-row>
     </div>
     
-    <!-- 系统状态区域 -->
-    <h3 class="section-title">系统状态</h3>
-    <el-card class="system-status">
-      <el-row :gutter="20">
-        <el-col :span="12">
-          <div class="status-item">
-            <div class="status-label">CPU 使用率</div>
-            <el-progress :percentage="32" :stroke-width="15" />
-          </div>
-          <div class="status-item">
-            <div class="status-label">内存使用率</div>
-            <el-progress :percentage="45" :stroke-width="15" />
-          </div>
-          <div class="status-item">
-            <div class="status-label">磁盘使用率</div>
-            <el-progress :percentage="68" :stroke-width="15" />
-          </div>
-        </el-col>
-        <el-col :span="12">
-          <div class="status-info">
-            <div class="info-item">
-              <div class="info-label">系统版本</div>
-              <div class="info-value">MediWise v1.0.5</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">运行时间</div>
-              <div class="info-value">32天16小时</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">最近更新</div>
-              <div class="info-value">2023-05-15 14:30:22</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">系统状态</div>
-              <div class="info-value">
-                <el-tag type="success" size="small">运行正常</el-tag>
-              </div>
-            </div>
-          </div>
-        </el-col>
-      </el-row>
-    </el-card>
-    
     <!-- 最近活动区域 -->
     <h3 class="section-title">最近活动</h3>
     <el-card class="recent-activity">
-      <el-table :data="activities" style="width: 100%">
+      <el-table :data="activities" style="width: 100%" v-loading="activitiesLoading">
         <el-table-column label="时间" width="180">
           <template #default="scope">
-            <span>{{ scope.row.time }}</span>
+            <span>{{ formatDateTime(scope.row.logTime) }}</span>
           </template>
         </el-table-column>
         <el-table-column label="用户" width="120">
           <template #default="scope">
-            <span>{{ scope.row.user }}</span>
+            <span>{{ scope.row.username }}</span>
           </template>
         </el-table-column>
         <el-table-column label="操作">
           <template #default="scope">
-            <span>{{ scope.row.action }}</span>
+            <span>{{ scope.row.actionDesc }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" width="100">
+          <template #default="scope">
+            <el-tag :type="getStatusType(scope.row.status)" size="small">
+              {{ getStatusLabel(scope.row.status) }}
+            </el-tag>
           </template>
         </el-table-column>
         <el-table-column label="IP地址" width="140" align="right">
           <template #default="scope">
-            <span>{{ scope.row.ip }}</span>
+            <span>{{ scope.row.ipAddress }}</span>
           </template>
         </el-table-column>
       </el-table>
+      <div class="view-more">
+        <router-link to="/system/logs">查看更多</router-link>
+      </div>
     </el-card>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { 
   User, 
   UserFilled,
+  List,
   Document,
-  List
+  Avatar
 } from '@element-plus/icons-vue'
+import { getRecentLogs } from '../../api/log'
+import { getAdminDashboardStatistics } from '../../api/statistics'
+import { formatDateTime } from '../../utils/format'
 
 // 最近活动数据
-const activities = [
-  {
-    time: '2023-05-15 14:30:22',
-    user: '管理员',
-    action: '添加了新用户: 张医生',
-    ip: '192.168.1.100'
-  },
-  {
-    time: '2023-05-15 13:15:45',
-    user: '管理员',
-    action: '更新了系统配置',
-    ip: '192.168.1.100'
-  },
-  {
-    time: '2023-05-14 16:42:10',
-    user: '管理员',
-    action: '添加了新的知识库条目: 高血压诊断标准',
-    ip: '192.168.1.100'
-  },
-  {
-    time: '2023-05-14 10:23:15',
-    user: '管理员',
-    action: '修改了用户权限: 李医生',
-    ip: '192.168.1.100'
-  },
-  {
-    time: '2023-05-13 09:12:33',
-    user: '系统',
-    action: '系统自动备份完成',
-    ip: '127.0.0.1'
+const activities = ref([])
+const activitiesLoading = ref(false)
+
+// 控制台统计数据
+const statistics = ref({
+  userCount: 0,
+  newUsersThisMonth: 0,
+  roleCount: 0,
+  logCount: 0,
+  newLogsToday: 0
+})
+
+// 获取控制台统计数据
+const fetchStatistics = () => {
+  getAdminDashboardStatistics()
+    .then(response => {
+      if (response.data && response.data.code === 1) {
+        statistics.value = response.data.data || {}
+      } else {
+        console.error('获取控制台统计数据失败:', response.data?.msg)
+      }
+    })
+    .catch(error => {
+      console.error('获取控制台统计数据出错:', error)
+    })
+}
+
+// 获取最近活动
+const fetchRecentActivities = () => {
+  activitiesLoading.value = true
+  getRecentLogs(10)
+    .then(response => {
+      if (response.data && response.data.code === 1) {
+        activities.value = response.data.data || []
+      } else {
+        console.error('获取最近活动失败:', response.data?.msg)
+        activities.value = []
+      }
+    })
+    .catch(error => {
+      console.error('获取最近活动出错:', error)
+      activities.value = []
+    })
+    .finally(() => {
+      activitiesLoading.value = false
+    })
+}
+
+// 获取状态标签类型
+const getStatusType = (status) => {
+  const types = {
+    'SUCCESS': 'success',
+    'FAILURE': 'warning',
+    'ERROR': 'danger'
   }
-]
+  return types[status] || 'info'
+}
+
+// 获取状态标签文本
+const getStatusLabel = (status) => {
+  const labels = {
+    'SUCCESS': '成功',
+    'FAILURE': '失败',
+    'ERROR': '错误'
+  }
+  return labels[status] || status
+}
+
+// 组件挂载时获取数据
+onMounted(() => {
+  fetchStatistics()
+  fetchRecentActivities()
+})
 </script>
 
 <style scoped>
@@ -299,10 +295,6 @@ const activities = [
 
 .stat-icon.roles {
   background: linear-gradient(135deg, #67C23A 0%, #4a9e20 100%);
-}
-
-.stat-icon.knowledge {
-  background: linear-gradient(135deg, #E6A23C 0%, #c78722 100%);
 }
 
 .stat-icon.logs {
@@ -379,59 +371,29 @@ const activities = [
   color: #909399;
 }
 
-/* 系统状态样式 */
-.system-status {
-  margin-bottom: 30px;
-}
-
-.status-item {
-  margin-bottom: 20px;
-}
-
-.status-label {
-  margin-bottom: 8px;
-  font-size: 14px;
-  color: #606266;
-}
-
-.status-info {
-  padding-left: 20px;
-  border-left: 1px solid #EBEEF5;
-  height: 100%;
-}
-
-.info-item {
-  margin-bottom: 15px;
-  display: flex;
-  align-items: center;
-}
-
-.info-label {
-  width: 100px;
-  font-size: 14px;
-  color: #909399;
-}
-
-.info-value {
-  font-size: 14px;
-  color: #303133;
-  font-weight: 500;
-}
-
 /* 最近活动样式 */
 .recent-activity {
   margin-bottom: 30px;
 }
 
+.view-more {
+  margin-top: 15px;
+  text-align: right;
+}
+
+.view-more a {
+  color: #409EFF;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.view-more a:hover {
+  text-decoration: underline;
+}
+
 @media (max-width: 768px) {
   .stat-cards {
     grid-template-columns: 1fr;
-  }
-  
-  .status-info {
-    padding-left: 0;
-    border-left: none;
-    margin-top: 20px;
   }
 }
 </style> 

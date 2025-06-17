@@ -38,14 +38,4 @@ const actions = {
 export const useStore = () => ({
   state: readonly(state),
   ...actions
-})
-
-// 获取用户角色
-export const getUserRole = () => {
-  return state.userInfo ? state.userInfo.role : null
-}
-
-// 获取用户信息
-export const getUserInfo = () => {
-  return state.userInfo
-} 
+}) 

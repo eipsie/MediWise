@@ -79,8 +79,8 @@
           :total="pagination.total"
           :page-sizes="[10, 20, 30, 50]"
           layout="total, sizes, prev, pager, next, jumper"
-          @current-change="handleCurrentChange"
-          @size-change="handleSizeChange"
+          @update:current-page="fetchPatients"
+          @update:page-size="handleSizeChange"
         />
       </div>
     </el-card>
@@ -190,13 +190,7 @@ const resetSearch = () => {
 }
 
 // 分页相关操作
-const handleCurrentChange = (val) => {
-  pagination.current = val
-  fetchPatientList()
-}
-
-const handleSizeChange = (val) => {
-  pagination.size = val
+const handleSizeChange = () => {
   pagination.current = 1
   fetchPatientList()
 }
@@ -244,6 +238,9 @@ const formatDate = (dateString) => {
   const date = new Date(dateString)
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
 }
+
+// 方便起见创建一个fetchPatients别名
+const fetchPatients = fetchPatientList
 
 // 初始化
 onMounted(() => {
