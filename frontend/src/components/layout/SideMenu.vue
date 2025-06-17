@@ -82,11 +82,11 @@
           </template>
           <el-menu-item index="/system/users">
             <el-icon><UserFilled /></el-icon>
-            <span>用户管理</span>
+            <span>医生管理</span>
           </el-menu-item>
           <el-menu-item index="/system/roles">
             <el-icon><Avatar /></el-icon>
-            <span>角色管理</span>
+            <span>患者管理</span>
           </el-menu-item>
           <el-menu-item index="/system/logs">
             <el-icon><Notebook /></el-icon>
