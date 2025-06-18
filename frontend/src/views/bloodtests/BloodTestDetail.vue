@@ -87,8 +87,21 @@
         </div>
       </template>
       
-      <div class="ai-result" v-if="bloodTest.aiAnalysisResult">
-        <div class="markdown-content" v-html="formatAiResult">
+      <div class="ai-analysis-container" v-if="bloodTest.aiAnalysisResult">
+        <div class="ai-content" ref="analysisContent"></div>
+        
+        <div class="ai-data-toggle">
+          <el-switch 
+            v-model="showRawData" 
+            active-text="查看原始数据" 
+            inactive-text="查看分析结果"
+            @change="toggleRawData"
+            size="small"
+          />
+        </div>
+        
+        <div v-if="showRawData" class="ai-raw-data">
+          <pre class="json-content">{{ formattedRawData }}</pre>
         </div>
       </div>
       
@@ -106,7 +119,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, onBeforeUnmount, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { EditPen, Printer, Back, User, DataAnalysis, Cpu } from '@element-plus/icons-vue'
@@ -117,6 +130,8 @@ import {
 } from '../../api/bloodtest'
 import { getPatientById } from '../../api/patient'
 import MarkdownIt from 'markdown-it'
+import hljs from 'highlight.js'
+import 'highlight.js/styles/github.css'
 
 const route = useRoute()
 const router = useRouter()
@@ -125,8 +140,25 @@ const loading = ref(false)
 const analyzing = ref(false)
 const bloodTest = ref({})
 const patient = ref({})
+const showRawData = ref(false)
 
-const md = new MarkdownIt()
+// 初始化markdown渲染器
+const md = new MarkdownIt({
+  html: false, // 不允许HTML标签
+  linkify: true,
+  typographer: true,
+  breaks: true,
+  highlight: function (str, lang) {
+    if (lang && hljs.getLanguage(lang)) {
+      try {
+        return '<pre class="hljs"><code>' +
+               hljs.highlight(str, { language: lang, ignoreIllegals: true }).value +
+               '</code></pre>';
+      } catch (__) {}
+    }
+    return '<pre class="hljs"><code>' + md.utils.escapeHtml(str) + '</code></pre>';
+  }
+})
 
 // 血常规检查项目配置
 const bloodTestItems = [
@@ -158,20 +190,94 @@ const formatDateTime = (dateTime) => {
   }
 }
 
-// 格式化AI分析结果
-const formatAiResult = computed(() => {
+// 格式化的原始数据
+const formattedRawData = computed(() => {
   try {
-    if (!bloodTest.value.aiAnalysisResult) return ''
+    if (!bloodTest.value.aiAnalysisResult) return '';
     
-    const data = typeof bloodTest.value.aiAnalysisResult === 'string' 
-      ? JSON.parse(bloodTest.value.aiAnalysisResult) 
-      : bloodTest.value.aiAnalysisResult
+    let data = typeof bloodTest.value.aiAnalysisResult === 'string'
+      ? JSON.parse(bloodTest.value.aiAnalysisResult)
+      : bloodTest.value.aiAnalysisResult;
+      
+    // 如果有content字段，简化显示
+    if (data.content && typeof data.content === 'string') {
+      const truncated = data.content.length > 100;
+      data = { 
+        ...data, 
+        content: truncated ? data.content.substring(0, 100) + '... (内容已截断)' : data.content 
+      };
+    }
     
-    return data.content ? md.render(data.content) : md.render(JSON.stringify(data, null, 2))
+    return JSON.stringify(data, null, 2);
   } catch (e) {
-    return `<p>无法解析AI分析结果</p><pre>${bloodTest.value.aiAnalysisResult}</pre>`
+    console.error('格式化原始数据出错:', e);
+    return bloodTest.value.aiAnalysisResult || '';
   }
-})
+});
+
+// 渲染分析结果
+const renderAnalysisContent = () => {
+  try {
+    if (!bloodTest.value.aiAnalysisResult) return;
+    
+    // 获取目标元素
+    const contentEl = document.querySelector('.ai-content');
+    if (!contentEl) return;
+    
+    let data;
+    try {
+      data = typeof bloodTest.value.aiAnalysisResult === 'string'
+        ? JSON.parse(bloodTest.value.aiAnalysisResult)
+        : bloodTest.value.aiAnalysisResult;
+    } catch (e) {
+      // 解析失败，显示原始内容
+      contentEl.innerHTML = `<div class="raw-result">${bloodTest.value.aiAnalysisResult.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</div>`;
+      return;
+    }
+    
+    // 提取内容
+    let content = '';
+    if (data.content) {
+      content = data.content;
+    } else if (data.result) {
+      content = data.result;
+    } else if (typeof data === 'string') {
+      content = data;
+    } else if (data.bloodtestAnalysis || data.bloodTestAnalysis) {
+      content = data.bloodtestAnalysis || data.bloodTestAnalysis;
+    } else {
+      // 构建内容
+      content = '## 血常规检查分析结果\n\n';
+      Object.entries(data).forEach(([key, value]) => {
+        if (typeof value === 'string' && value.trim() && 
+            !['id', 'createTime', 'updateTime'].includes(key)) {
+          content += `### ${key}\n${value}\n\n`;
+        }
+      });
+    }
+    
+    // 安全处理内容
+    const safeContent = content.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    
+    // 渲染为HTML
+    const renderedHtml = md.render(safeContent);
+    
+    // 设置内容
+    contentEl.innerHTML = `
+      <div class="ai-result">
+        <div class="markdown-content custom-markdown">
+          ${renderedHtml}
+        </div>
+      </div>
+    `;
+  } catch (e) {
+    console.error('渲染分析结果出错:', e);
+    const contentEl = document.querySelector('.ai-content');
+    if (contentEl) {
+      contentEl.innerHTML = `<p>无法解析AI分析结果</p>`;
+    }
+  }
+};
 
 // 获取血常规检查详情
 const fetchBloodTestDetail = async () => {
@@ -219,19 +325,72 @@ const handleAnalyze = async () => {
     })
     
     if (res.data && res.data.code === 1) {
-      ElMessage.success('AI分析请求已提交，请稍后刷新查看结果')
-      // 分析完成后刷新页面
-      setTimeout(() => {
-        fetchBloodTestDetail()
-      }, 1000)
+      ElMessage.success('AI分析请求已提交，正在处理中...')
+      
+      // 开始轮询检查分析结果
+      pollAnalysisResult()
     } else {
       ElMessage.error(res.data?.message || 'AI分析请求失败')
+      analyzing.value = false
     }
   } catch (error) {
     ElMessage.error('AI分析请求出错')
-  } finally {
     analyzing.value = false
   }
+}
+
+// 轮询检查分析结果
+let pollInterval = null
+const pollAnalysisResult = () => {
+  const maxAttempts = 10 // 最多尝试10次
+  let attempts = 0
+  
+  // 清除可能存在的旧轮询
+  if (pollInterval) {
+    clearInterval(pollInterval)
+  }
+  
+  pollInterval = setInterval(async () => {
+    try {
+      attempts++
+      console.log(`正在检查血常规分析结果，第${attempts}次尝试`)
+      
+      const res = await getBloodTestById(bloodTestId)
+      if (res.data && res.data.code === 1) {
+        const bloodTestData = res.data.data
+        
+        // 如果分析结果已返回
+        if (bloodTestData.aiAnalysisResult && bloodTestData.aiAnalysisResult.trim() !== '') {
+          clearInterval(pollInterval)
+          console.log('已获取到血常规AI分析结果')
+          
+          // 更新血常规数据
+          bloodTest.value = bloodTestData
+          
+          ElMessage.success('AI分析完成！')
+          analyzing.value = false
+        } else if (attempts >= maxAttempts) {
+          clearInterval(pollInterval)
+          ElMessage.warning('分析请求已提交，但处理时间较长，请稍后刷新页面查看结果')
+          analyzing.value = false
+        }
+      } else {
+        console.error('获取分析结果失败:', res.data?.message)
+        if (attempts >= maxAttempts) {
+          clearInterval(pollInterval)
+          ElMessage.error('获取分析结果失败，请稍后刷新页面重试')
+          analyzing.value = false
+        }
+      }
+    } catch (error) {
+      console.error('轮询分析结果错误:', error)
+      if (attempts >= maxAttempts) {
+        clearInterval(pollInterval)
+        ElMessage.error('获取分析结果出错，请稍后刷新页面重试')
+        analyzing.value = false
+      }
+    }
+  }, 3000) // 每3秒检查一次
 }
 
 // 跳转编辑页面
@@ -271,6 +430,37 @@ const generateReport = () => {
   if (!bloodTest.value || !bloodTest.value.id) {
     ElMessage.warning('没有检查数据可供生成报告')
     return
+  }
+  
+  // 获取分析结果HTML
+  let analysisHtml = '';
+  if (bloodTest.value.aiAnalysisResult) {
+    try {
+      let data = typeof bloodTest.value.aiAnalysisResult === 'string'
+        ? JSON.parse(bloodTest.value.aiAnalysisResult)
+        : bloodTest.value.aiAnalysisResult;
+        
+      // 提取内容
+      let content = '';
+      if (data.content) {
+        content = data.content;
+      } else if (data.result) {
+        content = data.result;
+      } else if (typeof data === 'string') {
+        content = data;
+      } else if (data.bloodtestAnalysis || data.bloodTestAnalysis) {
+        content = data.bloodtestAnalysis || data.bloodTestAnalysis;
+      }
+      
+      // 安全处理内容
+      const safeContent = content.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      
+      // 渲染为HTML
+      analysisHtml = md.render(safeContent);
+    } catch (e) {
+      console.error('生成报告时解析分析结果出错:', e);
+      analysisHtml = '<p>无法解析AI分析结果</p>';
+    }
   }
   
   // 创建报告模板
@@ -414,7 +604,7 @@ const generateReport = () => {
       ${bloodTest.value.aiAnalysisResult ? 
         `<div class="analysis">
           <h2>AI辅助分析</h2>
-          ${formatAiResult.value}
+          ${analysisHtml}
         </div>` 
         : ''}
       
@@ -444,6 +634,26 @@ const generateReport = () => {
 // 页面初始化时加载数据
 onMounted(() => {
   fetchBloodTestDetail()
+})
+
+// 切换显示原始数据
+const toggleRawData = (value) => {
+  showRawData.value = value
+}
+
+// 监听数据变化，更新渲染
+watch(() => bloodTest.value.aiAnalysisResult, () => {
+  nextTick(() => {
+    renderAnalysisContent();
+  });
+}, { immediate: true });
+
+// 组件卸载前清除定时器
+onBeforeUnmount(() => {
+  if (pollInterval) {
+    clearInterval(pollInterval)
+    pollInterval = null
+  }
 })
 </script>
 
@@ -524,31 +734,128 @@ onMounted(() => {
   margin: 8px 0;
 }
 
-.ai-result {
-  padding: 10px;
+.ai-analysis-container {
+  position: relative;
+  padding: 16px;
+  background-color: #f0f9eb;
+  border-radius: 8px;
+  border-left: 4px solid #67c23a;
+  margin: 0 15px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
 }
 
-.markdown-content {
+.ai-content {
   line-height: 1.8;
   color: #303133;
 }
 
-.markdown-content h3 {
+.custom-markdown :deep(h1), 
+.custom-markdown :deep(h2) {
+  color: #409EFF;
+  font-size: 20px;
+  margin-top: 20px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #eaeaea;
+  padding-bottom: 10px;
+}
+
+.custom-markdown :deep(h3) {
   color: #409EFF;
   font-size: 16px;
-  margin-top: 16px;
+  margin-top: 18px;
   margin-bottom: 12px;
-  border-bottom: 1px solid #eaeaea;
   padding-bottom: 8px;
+  border-bottom: 1px dashed #eaeaea;
 }
 
-.markdown-content p {
-  margin: 10px 0;
+.custom-markdown :deep(h4) {
+  color: #67c23a;
+  font-size: 15px;
+  margin-top: 16px;
+  margin-bottom: 10px;
 }
 
-.markdown-content ul {
-  padding-left: 20px;
-  margin: 10px 0;
+.custom-markdown :deep(p) {
+  margin: 12px 0;
+  line-height: 1.8;
+}
+
+.custom-markdown :deep(ul), 
+.custom-markdown :deep(ol) {
+  padding-left: 24px;
+  margin: 12px 0;
+}
+
+.custom-markdown :deep(li) {
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+
+.custom-markdown :deep(code) {
+  background-color: #f6f8fa;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: monospace;
+  color: #e6a23c;
+}
+
+.custom-markdown :deep(pre) {
+  background-color: #f6f8fa;
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 12px 0;
+}
+
+.custom-markdown :deep(blockquote) {
+  border-left: 4px solid #67c23a;
+  padding: 0 12px;
+  color: #606266;
+  background-color: #f0f9eb;
+  margin: 16px 0;
+  border-radius: 0 4px 4px 0;
+}
+
+.custom-markdown :deep(strong) {
+  color: #409EFF;
+}
+
+.ai-data-toggle {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  font-size: 12px;
+  z-index: 5;
+  background-color: rgba(255, 255, 255, 0.8);
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+
+.ai-raw-data {
+  margin-top: 16px;
+  padding: 12px;
+  background-color: #f6f8fa;
+  border-radius: 6px;
+  border: 1px solid #eaeaea;
+  max-height: 300px;
+  overflow-y: auto;
+  font-family: monospace;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.json-content {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.raw-result {
+  padding: 10px;
+  background-color: #f6f8fa;
+  border-radius: 6px;
+  font-family: monospace;
+  white-space: pre-wrap;
 }
 
 .value-high {
@@ -597,5 +904,18 @@ onMounted(() => {
   .header-actions .el-button {
     flex: 1;
   }
+}
+
+.test-indicator {
+  color: #409EFF;
+  font-weight: bold;
+}
+
+.test-value {
+  color: #67c23a;
+  font-weight: bold;
+  background-color: rgba(103, 194, 58, 0.1);
+  padding: 2px 4px;
+  border-radius: 2px;
 }
 </style> 

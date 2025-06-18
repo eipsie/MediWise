@@ -3,6 +3,9 @@
     <div class="page-header">
       <h2>诊断详情</h2>
       <div class="header-actions">
+        <el-button type="success" @click="generateReport" :disabled="!diagnosis.id">
+          <el-icon><Printer /></el-icon> 导出报告
+        </el-button>
         <el-button type="primary" @click="handleEdit" v-if="canEdit">编辑</el-button>
         <el-button @click="goBack">返回</el-button>
       </div>
@@ -107,6 +110,7 @@ import { getPatientById } from '../../api/patient'
 import MarkdownIt from 'markdown-it'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github.css'
+import { Printer } from '@element-plus/icons-vue'
 
 // 初始化markdown渲染器
 const md = new MarkdownIt({
@@ -305,6 +309,267 @@ const formatDateTime = (dateString) => {
 const toggleDataView = (value) => {
   showRawData.value = value
   console.log('切换数据视图模式:', value ? '原始数据' : '格式化结果')
+}
+
+// 生成并导出诊断报告
+const generateReport = () => {
+  if (!diagnosis.value.id || !patient.value.id) {
+    ElMessage.warning('无法生成报告：缺少诊断或患者信息')
+    return
+  }
+  
+  // 处理AI分析结果
+  let analysisHtml = ''
+  if (diagnosis.value.llmResponseData) {
+    try {
+      // 解析JSON结构
+      const data = typeof diagnosis.value.llmResponseData === 'string'
+        ? JSON.parse(diagnosis.value.llmResponseData)
+        : diagnosis.value.llmResponseData
+      
+      // 提取内容
+      let content = ''
+      if (typeof data === 'string') {
+        content = data
+      } else {
+        // 构建分析内容
+        if (data.possibleDiagnoses) {
+          content += `### 可能的诊断\n${data.possibleDiagnoses}\n\n`
+        }
+        
+        if (data.reasoningProcess) {
+          content += `### 分析推理\n${data.reasoningProcess}\n\n`
+        }
+        
+        if (data.diagnosisSuggestion) {
+          content += `### 建议诊断\n${data.diagnosisSuggestion}\n\n`
+        }
+        
+        if (data.treatmentSuggestion) {
+          content += `### 建议治疗\n${data.treatmentSuggestion}\n\n`
+        }
+        
+        // 如果没有找到上述结构，尝试其他格式
+        if (!content) {
+          if (data.result) {
+            content = data.result
+          } else if (data.content) {
+            content = data.content
+          } else {
+            // 如果是其他格式，尝试展示关键字段
+            content = '### AI分析结果\n\n'
+            
+            Object.entries(data).forEach(([key, value]) => {
+              if (typeof value === 'string' && value.trim()) {
+                content += `**${key}**: ${value}\n\n`
+              }
+            })
+          }
+        }
+      }
+      
+      // 安全处理内容并渲染为HTML
+      const safeContent = content.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      analysisHtml = md.render(safeContent)
+    } catch (e) {
+      console.error('生成报告时解析分析结果出错:', e)
+      analysisHtml = '<p>无法解析AI分析结果</p>'
+    }
+  }
+  
+  // 解析生命体征（如果有）
+  let vitalSignsHtml = ''
+  if (diagnosis.value.vitalSigns) {
+    try {
+      const vitalSigns = JSON.parse(diagnosis.value.vitalSigns)
+      vitalSignsHtml = `
+        <div class="vital-signs-section">
+          <h3>生命体征</h3>
+          <ul>
+            ${Object.entries(vitalSigns).map(([key, value]) => `
+              <li>
+                <strong>${getVitalSignLabel(key)}:</strong> ${value} ${getVitalSignUnit(key)}
+              </li>
+            `).join('')}
+          </ul>
+        </div>
+      `
+    } catch (e) {
+      console.error('解析生命体征数据出错:', e)
+    }
+  }
+  
+  // 创建报告模板
+  const reportTemplate = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>诊断报告 - ${patient.value?.name || '患者'}</title>
+      <meta charset="utf-8">
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          line-height: 1.6;
+          max-width: 800px;
+          margin: 0 auto;
+          padding: 20px;
+          color: #333;
+        }
+        .header {
+          text-align: center;
+          margin-bottom: 20px;
+          padding-bottom: 10px;
+          border-bottom: 2px solid #409eff;
+        }
+        .header h1 {
+          margin-bottom: 5px;
+          color: #409eff;
+        }
+        .patient-info {
+          margin-bottom: 20px;
+          padding: 15px;
+          background-color: #f9f9f9;
+          border-radius: 8px;
+          border-left: 4px solid #409eff;
+        }
+        .diagnosis-section {
+          margin-bottom: 20px;
+          padding: 15px;
+          background-color: #f5f7fa;
+          border-radius: 8px;
+          border-left: 4px solid #67c23a;
+        }
+        .diagnosis-section h2 {
+          color: #67c23a;
+          margin-top: 0;
+        }
+        .vital-signs-section {
+          margin-bottom: 20px;
+          padding: 15px;
+          background-color: #f5f7fa;
+          border-radius: 8px;
+        }
+        .vital-signs-section ul {
+          list-style-type: none;
+          padding-left: 0;
+        }
+        .vital-signs-section li {
+          margin-bottom: 8px;
+        }
+        .treatment-plan {
+          margin-bottom: 20px;
+          padding: 15px;
+          background-color: #fdf6ec;
+          border-radius: 8px;
+          border-left: 4px solid #e6a23c;
+        }
+        .treatment-plan h2 {
+          color: #e6a23c;
+          margin-top: 0;
+        }
+        .ai-analysis {
+          margin-top: 20px;
+          padding: 15px;
+          background-color: #f0f9eb;
+          border-radius: 8px;
+          border-left: 4px solid #67c23a;
+        }
+        .ai-analysis h2 {
+          color: #67c23a;
+          margin-top: 0;
+        }
+        .footer {
+          margin-top: 30px;
+          text-align: center;
+          font-size: 12px;
+          color: #909399;
+          padding-top: 15px;
+          border-top: 1px solid #ebeef5;
+        }
+        @media print {
+          body {
+            padding: 0;
+          }
+          .no-print {
+            display: none;
+          }
+          button {
+            display: none;
+          }
+        }
+        h3 {
+          color: #409eff;
+          border-bottom: 1px solid #eaeaea;
+          padding-bottom: 5px;
+        }
+        .multiline {
+          white-space: pre-wrap;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h1>诊断报告</h1>
+        <p>报告时间: ${new Date().toLocaleString('zh-CN')}</p>
+      </div>
+      
+      <div class="patient-info">
+        <h2>患者信息</h2>
+        <p><strong>姓名:</strong> ${patient.value?.name || '--'}</p>
+        <p><strong>编号:</strong> ${patient.value?.patientNo || '--'}</p>
+        <p><strong>性别:</strong> ${patient.value?.genderText || '--'} | <strong>年龄:</strong> ${patient.value?.age || '--'} 岁</p>
+        ${patient.value?.allergies ? `<p><strong>过敏史:</strong> ${patient.value.allergies}</p>` : ''}
+        ${patient.value?.medicalHistory ? `<p><strong>既往病史:</strong> ${patient.value.medicalHistory}</p>` : ''}
+      </div>
+      
+      <div class="diagnosis-section">
+        <h2>诊断信息</h2>
+        <p><strong>诊断时间:</strong> ${formatDateTime(diagnosis.value.diagnosisTime)}</p>
+        <p><strong>主诊医生:</strong> ${diagnosis.value.doctorName || '--'}</p>
+        <p><strong>状态:</strong> ${getDiagnosisStatusText(diagnosis.value.status)}</p>
+        
+        <h3>症状描述</h3>
+        <p class="multiline">${diagnosis.value.symptomsText || '--'}</p>
+        
+        ${vitalSignsHtml}
+        
+        <h3>最终诊断</h3>
+        <p style="font-weight: bold; color: #409eff;">${diagnosis.value.finalDiagnosis || '--'}</p>
+      </div>
+      
+      <div class="treatment-plan">
+        <h2>治疗方案</h2>
+        <p class="multiline">${diagnosis.value.treatmentPlan || '--'}</p>
+      </div>
+      
+      ${diagnosis.value.llmResponseData ? 
+        `<div class="ai-analysis">
+          <h2>AI辅助分析</h2>
+          ${analysisHtml}
+        </div>` 
+        : ''}
+      
+      <div class="footer">
+        <p>报告生成于: ${formatDateTime(new Date())} | MediWise医疗系统</p>
+        <p>注: 本报告仅供医学参考，具体诊断请遵医嘱。</p>
+      </div>
+      
+      <div class="no-print" style="margin-top: 20px; text-align: center;">
+        <button onclick="window.print()" style="padding: 10px 20px; background-color: #409EFF; color: white; border: none; border-radius: 4px; cursor: pointer; box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1);">
+          打印报告
+        </button>
+        <button onclick="window.close()" style="padding: 10px 20px; margin-left: 10px; background-color: #67c23a; color: white; border: none; border-radius: 4px; cursor: pointer; box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1);">
+          关闭窗口
+        </button>
+      </div>
+    </body>
+    </html>
+  `
+  
+  // 打开新窗口并显示报告
+  const reportWindow = window.open('', '_blank')
+  reportWindow.document.write(reportTemplate)
+  reportWindow.document.close()
 }
 
 // 初始化
