@@ -68,8 +68,18 @@
         </el-descriptions-item>
         
         <!-- 仅在非COMPLETED状态才显示AI辅助分析 -->
-        <el-descriptions-item label="AI辅助分析" v-if="diagnosis.llmResponseData && diagnosis.status !== 'COMPLETED'">
-          <div class="ai-result">{{ formatAiResult(diagnosis.llmResponseData) }}</div>
+        <el-descriptions-item label="AI辅助分析" v-if="diagnosis.llmResponseData">
+          <div class="ai-analysis-header">
+            <el-switch
+              v-model="showRawData"
+              active-text="查看原始数据"
+              inactive-text="查看格式化结果"
+              @change="toggleDataView"
+              size="small"
+            />
+          </div>
+          <div v-if="!showRawData" class="ai-result markdown-content" v-html="formatAiResult(diagnosis.llmResponseData)"></div>
+          <pre v-else class="raw-data">{{ diagnosis.llmResponseData }}</pre>
         </el-descriptions-item>
         
         <el-descriptions-item label="最终诊断" class="highlight-item">
@@ -94,6 +104,27 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { getDiagnosisById, getDiagnosisStatusText, getDiagnosisStatusType } from '../../api/diagnosis'
 import { getPatientById } from '../../api/patient'
+import MarkdownIt from 'markdown-it'
+import hljs from 'highlight.js'
+import 'highlight.js/styles/github.css'
+
+// 初始化markdown渲染器
+const md = new MarkdownIt({
+  html: true,
+  linkify: true,
+  typographer: true,
+  breaks: true,
+  highlight: function (str, lang) {
+    if (lang && hljs.getLanguage(lang)) {
+      try {
+        return '<pre class="hljs"><code>' +
+               hljs.highlight(str, { language: lang, ignoreIllegals: true }).value +
+               '</code></pre>';
+      } catch (__) {}
+    }
+    return '<pre class="hljs"><code>' + md.utils.escapeHtml(str) + '</code></pre>';
+  }
+})
 
 const route = useRoute()
 const router = useRouter()
@@ -101,6 +132,7 @@ const diagnosisId = route.params.id
 const loading = ref(false)
 const diagnosis = ref({})
 const patient = ref({})
+const showRawData = ref(false)
 
 // 是否可以编辑（非"已完成"状态可编辑）
 const canEdit = computed(() => {
@@ -205,21 +237,60 @@ const formatAiResult = (aiDataStr) => {
   try {
     const parsedData = JSON.parse(aiDataStr);
     
-    // 支持多种JSON格式
-    if (parsedData.result) {
-      return parsedData.result;
-    } else if (parsedData.content) {
-      return parsedData.content;
-    } else if (typeof parsedData === 'string') {
-      return parsedData;
-    } else {
-      // 如果是其他格式，尝试展示整个JSON
-      return JSON.stringify(parsedData);
+    // 尝试从不同格式的JSON中提取内容
+    let result = '';
+    
+    // 解析不同格式的JSON结构
+    if (parsedData.possibleDiagnoses) {
+      result += `### 可能的诊断\n${parsedData.possibleDiagnoses}\n\n`;
     }
+    
+    if (parsedData.reasoningProcess) {
+      result += `### 分析推理\n${parsedData.reasoningProcess}\n\n`;
+    }
+    
+    if (parsedData.diagnosisSuggestion) {
+      result += `### 建议诊断\n${parsedData.diagnosisSuggestion}\n\n`;
+    }
+    
+    if (parsedData.treatmentSuggestion) {
+      result += `### 建议治疗\n${parsedData.treatmentSuggestion}\n\n`;
+    }
+    
+    // 处理简单的结构
+    if (!result) {
+      if (parsedData.result) {
+        result = parsedData.result;
+      } else if (parsedData.content) {
+        result = parsedData.content;
+      } else if (typeof parsedData === 'string') {
+        result = parsedData;
+      } else {
+        // 如果是其他格式，尝试展示关键字段
+        result = '### AI分析结果\n\n';
+        
+        Object.entries(parsedData).forEach(([key, value]) => {
+          if (typeof value === 'string' && value.trim()) {
+            result += `**${key}**: ${value}\n\n`;
+          }
+        });
+      }
+    }
+    
+    // 处理文本以改善Markdown渲染
+    let processedText = result
+      .replace(/\n([-*+]|\d+\.)\s/g, '\n\n$1 ')  // 确保列表项前有空行
+      .replace(/\n\|\s*([^|]+)\s*\|/g, '\n| $1 |');  // 确保表格行正确格式化
+    
+    return md.render(processedText);
   } catch (e) {
     console.error('解析AI返回数据出错:', e);
-    // 如果解析失败，直接返回原字符串
-    return aiDataStr;
+    // 如果解析失败，直接返回原字符串的HTML安全版本
+    try {
+      return `<div class="raw-result">${aiDataStr.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</div>`;
+    } catch (err) {
+      return '<div class="error-message">无法显示AI分析结果</div>';
+    }
   }
 }
 
@@ -228,6 +299,12 @@ const formatDateTime = (dateString) => {
   if (!dateString) return '-'
   const date = new Date(dateString)
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`
+}
+
+// 切换数据视图模式
+const toggleDataView = (value) => {
+  showRawData.value = value
+  console.log('切换数据视图模式:', value ? '原始数据' : '格式化结果')
 }
 
 // 初始化
@@ -300,15 +377,152 @@ onMounted(() => {
 }
 
 .ai-result {
-  padding: 10px;
+  padding: 12px 15px;
   background-color: #f0f9eb;
   border-left: 3px solid #67c23a;
   border-radius: 4px;
-  white-space: pre-wrap;
+  margin-right: -10px; /* 向右偏移一点 */
+  max-width: 95%; /* 控制宽度，更靠右 */
 }
 
 .highlight-item :deep(.el-descriptions-item__content) {
   font-weight: bold;
   color: #409eff;
+}
+
+/* Markdown样式 */
+.markdown-content :deep(h3) {
+  color: #409EFF;
+  font-size: 16px;
+  margin-top: 15px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #eaeaea;
+  padding-bottom: 5px;
+}
+
+.markdown-content :deep(h4) {
+  color: #67C23A;
+  font-size: 15px;
+  margin-top: 12px;
+  margin-bottom: 8px;
+}
+
+.markdown-content :deep(p) {
+  margin: 8px 0;
+  line-height: 1.6;
+}
+
+.markdown-content :deep(ul), .markdown-content :deep(ol) {
+  padding-left: 20px;
+  margin: 8px 0;
+}
+
+.markdown-content :deep(li) {
+  margin-bottom: 6px;
+  line-height: 1.5;
+}
+
+.markdown-content :deep(code) {
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: monospace;
+}
+
+.markdown-content :deep(pre) {
+  background-color: #f6f8fa;
+  padding: 12px;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin: 12px 0;
+}
+
+.markdown-content :deep(blockquote) {
+  border-left: 4px solid #dfe2e5;
+  padding-left: 16px;
+  margin: 16px 0;
+  color: #666;
+}
+
+.markdown-content :deep(table) {
+  border-collapse: collapse;
+  margin: 12px 0;
+  width: 100%;
+}
+
+.markdown-content :deep(th), .markdown-content :deep(td) {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.markdown-content :deep(th) {
+  background-color: #f2f2f2;
+}
+
+.markdown-content :deep(tr:nth-child(even)) {
+  background-color: #f9f9f9;
+}
+
+/* 增加一个特殊处理可能的诊断列表的样式 */
+.markdown-content :deep(ol) {
+  counter-reset: diagnosis-counter;
+}
+
+.markdown-content :deep(ol li) {
+  counter-increment: diagnosis-counter;
+  position: relative;
+  padding-left: 5px;
+}
+
+.raw-result {
+  background-color: #f5f7fa;
+  padding: 10px;
+  border-radius: 4px;
+  font-family: monospace;
+  white-space: pre-wrap;
+}
+
+.error-message {
+  color: #f56c6c;
+  padding: 10px;
+  background-color: #fef0f0;
+  border-radius: 4px;
+}
+
+/* 修改描述列表项的样式，让内容更合理地显示 */
+:deep(.el-descriptions__body) {
+  width: 100%;
+}
+
+:deep(.el-descriptions__label) {
+  width: 120px;
+  min-width: 120px;
+  text-align: right;
+  padding-right: 15px;
+}
+
+:deep(.el-descriptions__content) {
+  padding: 12px 15px;
+  text-align: left;
+}
+
+.raw-data {
+  background-color: #f5f7fa;
+  padding: 10px;
+  border-radius: 4px;
+  font-family: monospace;
+  white-space: pre-wrap;
+  max-height: 400px;
+  overflow-y: auto;
+  font-size: 12px;
+  line-height: 1.4;
+  border: 1px solid #dcdfe6;
+}
+
+.ai-analysis-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
 }
 </style> 
