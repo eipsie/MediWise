@@ -152,12 +152,16 @@ const renderContent = (text) => {
   if (!text) return '';
   
   try {
-    // 预处理文本，特别处理有序列表
+    // 预处理文本，改进列表和表格的渲染
     let processedText = text
       // 确保列表项前有空行
       .replace(/\n([-*+]|\d+\.)\s/g, '\n\n$1 ')
       // 确保表格行之间有正确的换行
-      .replace(/\n\|\s*([^|]+)\s*\|/g, '\n| $1 |');
+      .replace(/\n\|\s*([^|]+)\s*\|/g, '\n| $1 |')
+      // 改进数字列表的格式
+      .replace(/^(\d+)\.\s/gm, '$1. ')
+      // 确保标题前有空行
+      .replace(/\n(#{1,6})\s/g, '\n\n$1 ');
       
     return md.render(processedText);
   } catch (e) {
@@ -485,45 +489,54 @@ onMounted(() => {
   max-width: 100%;
   overflow-wrap: break-word;
   word-break: break-word;
+  line-height: 1.7;
 }
 
 .markdown-body h1, 
 .markdown-body h2, 
 .markdown-body h3, 
 .markdown-body h4 {
-  margin-top: 16px;
-  margin-bottom: 10px;
+  margin-top: 20px;
+  margin-bottom: 12px;
   font-weight: 600;
   line-height: 1.4;
   text-align: left;
+  color: #2c3e50;
 }
 
 .markdown-body h1 {
   font-size: 20px;
-  padding-bottom: 4px;
+  padding-bottom: 6px;
   border-bottom: 1px solid #eaecef;
 }
 
 .markdown-body h2 {
   font-size: 18px;
-  padding-bottom: 4px;
+  padding-bottom: 5px;
   border-bottom: 1px solid #eaecef;
 }
 
 .markdown-body h3 {
   font-size: 16px;
+  color: #409eff;
+}
+
+.markdown-body h4 {
+  font-size: 15px;
+  color: #67c23a;
 }
 
 .markdown-body p {
-  margin-top: 8px;
-  margin-bottom: 8px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  line-height: 1.7;
 }
 
 /* 改进Markdown列表样式 */
 .markdown-body ul,
 .markdown-body ol {
-  padding-left: 1.5em;
-  margin: 12px 0;
+  padding-left: 1.8em;
+  margin: 14px 0;
   list-style-position: outside;
   box-sizing: border-box;
 }
@@ -532,84 +545,141 @@ onMounted(() => {
   list-style-type: disc;
 }
 
+.markdown-body ul ul {
+  list-style-type: circle;
+}
+
+.markdown-body ul ul ul {
+  list-style-type: square;
+}
+
 .markdown-body ol {
   list-style-type: decimal;
 }
 
 .markdown-body li {
   margin: 8px 0;
-  line-height: 1.6;
+  line-height: 1.7;
   position: relative;
-}
-
-.markdown-body li > p {
-  margin-top: 0;
-  margin-bottom: 0;
-}
-
-/* 确保列表项内容不会溢出 */
-.markdown-body li {
   padding-right: 4px;
   overflow-wrap: break-word;
   word-break: break-word;
 }
 
+.markdown-body li > p {
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
 .markdown-body strong {
   font-weight: 600;
+  color: #303133;
 }
 
-.list-item {
-  margin: 8px 0;
+.markdown-body em {
+  font-style: italic;
+  color: #606266;
 }
 
-.numbered-item, 
-.bullet-item {
-  padding-left: 4px;
-  display: block;
+/* 改进代码块样式 */
+.markdown-body pre {
+  overflow-x: auto;
+  max-width: 100%;
+  margin: 14px 0;
+  border-radius: 8px;
+  background-color: #f6f8fa;
+  padding: 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
-.message-time {
-  font-size: 12px;
-  color: #909399;
-  margin-top: 6px;
-  text-align: right;
-}
-
-.ai-message .message-time {
-  text-align: left;
-}
-
-/* 加载指示器 */
-.loading-message {
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: 22px;
-  animation: messageSlide 0.3s ease-out;
-  width: 100%;
-}
-
-.loading-indicator {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 24px;
-  background-color: #f0f9ff;
-  border-radius: 12px;
+.markdown-body code {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
   font-size: 14px;
-  color: #409eff;
-  margin-left: 14px;
-  text-align: left;
-  border-top-left-radius: 0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  animation: pulse 1.5s infinite;
-  min-width: 150px;
-  max-width: calc(70% - 14px);
+  background-color: rgba(175, 184, 193, 0.2);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  margin: 0 0.2em;
+  color: #d63200;
 }
 
-@keyframes pulse {
-  0% { opacity: 0.6; }
-  50% { opacity: 1; }
-  100% { opacity: 0.6; }
+.markdown-body pre code {
+  background-color: transparent;
+  padding: 0;
+  margin: 0;
+  border-radius: 0;
+  display: block;
+  overflow-x: auto;
+  line-height: 1.6;
+  color: #333;
+  tab-size: 2;
+}
+
+/* 改进表格样式 */
+.markdown-body table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 16px 0;
+  display: block;
+  overflow-x: auto;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.markdown-body table th,
+.markdown-body table td {
+  padding: 10px 14px;
+  border: 1px solid #dfe2e5;
+  text-align: left;
+}
+
+.markdown-body table th {
+  background-color: #f6f8fa;
+  font-weight: 600;
+  color: #606266;
+}
+
+.markdown-body table tr:nth-child(2n) {
+  background-color: #f8f8f8;
+}
+
+.markdown-body table tr:hover {
+  background-color: #f0f9ff;
+}
+
+/* 改进引用块样式 */
+.markdown-body blockquote {
+  margin: 16px 0;
+  padding: 8px 16px;
+  color: #606266;
+  background-color: #f8f9fa;
+  border-left: 4px solid #409eff;
+  border-radius: 0 4px 4px 0;
+}
+
+.markdown-body blockquote > :first-child {
+  margin-top: 0;
+}
+
+.markdown-body blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+/* 改进链接样式 */
+.markdown-body a {
+  color: #409eff;
+  text-decoration: none;
+}
+
+.markdown-body a:hover {
+  text-decoration: underline;
+}
+
+/* 改进图片样式 */
+.markdown-body img {
+  max-width: 100%;
+  margin: 8px 0;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* 输入区域 */
@@ -852,5 +922,59 @@ onMounted(() => {
   margin: 8px 0;
   padding-left: 8px;
   display: block;
+}
+
+.list-item {
+  margin: 8px 0;
+}
+
+.numbered-item, 
+.bullet-item {
+  padding-left: 4px;
+  display: block;
+}
+
+.message-time {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 6px;
+  text-align: right;
+}
+
+.ai-message .message-time {
+  text-align: left;
+}
+
+/* 加载指示器 */
+.loading-message {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 22px;
+  animation: messageSlide 0.3s ease-out;
+  width: 100%;
+}
+
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 24px;
+  background-color: #f0f9ff;
+  border-radius: 12px;
+  font-size: 14px;
+  color: #409eff;
+  margin-left: 14px;
+  text-align: left;
+  border-top-left-radius: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  animation: pulse 1.5s infinite;
+  min-width: 150px;
+  max-width: calc(70% - 14px);
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
 }
 </style> 
