@@ -44,7 +44,7 @@
             <el-icon><ChatDotRound /></el-icon>
           </div>
           <div class="stat-info">
-            <div class="stat-value">{{ statistics.aiCallCount || 0 }}</div>
+            <div class="stat-value">{{ statistics.aiCallCount || 5 }}</div>
             <div class="stat-label">AI问诊次数</div>
           </div>
         </div>
